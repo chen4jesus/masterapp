@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: ['cc.faithconnect.us'],
     proxy: {
       '/api/local': {
         target: 'http://localhost:3001',
@@ -24,5 +25,8 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  preview: {
+    allowedHosts: ['cc.faithconnect.us']
   }
 })
