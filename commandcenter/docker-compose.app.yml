@@ -15,7 +15,8 @@ services:
     volumes:
       - ./services.yaml:/app/services.yaml
     expose:
-      - "3000"   # Production server (API + Static Files)
+      - "3001"   # Express API server
+      - "5173"   # Vite preview server
     networks:
       - faithconnect
 
@@ -26,7 +27,7 @@ services:
     container_name: cc-bookstack-sync
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=${SYNC_SERVICE_PROFILE:-prod}
+      - SPRING_PROFILES_ACTIVE=prod
     expose:
       - "8080"
     networks:

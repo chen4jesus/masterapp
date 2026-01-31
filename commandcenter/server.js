@@ -10,10 +10,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 const SITES_FILE = path.join(__dirname, 'sites.yaml');
 const BOOKS_FILE = path.join(__dirname, 'books.yaml');
-const DIST_PATH = path.join(__dirname, 'dist');
 
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -223,23 +222,6 @@ app.post('/api/local/books/:bookId/config', (req, res) => {
     }
 });
 
-// Serve static files from the 'dist' directory
-if (fs.existsSync(DIST_PATH)) {
-    console.log(`[Server] Serving static files from ${DIST_PATH}`);
-    app.use(express.static(DIST_PATH));
-    
-    // For any other request, serve index.html (Client-side routing support)
-    app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(DIST_PATH, 'index.html'));
-        } else {
-            res.status(404).json({ error: 'API endpoint not found' });
-        }
-    });
-} else {
-    console.warn(`[Server] WARNING: Dist directory not found at ${DIST_PATH}. Static files will not be served.`);
-}
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Command Center server running on port ${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Local configuration server running on http://localhost:${PORT}`);
 });
