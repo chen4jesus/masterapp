@@ -17,9 +17,10 @@ COPY . .
 # Build the frontend
 RUN npm run build
 
-# Expose API server and preview server ports
-EXPOSE 3001 5173
+# Expose production port
+EXPOSE 3000
 
-# Start both the API server and preview server
-# Using a simple shell script approach
-CMD ["sh", "-c", "node server.js & npm run preview -- --host 0.0.0.0 --port 5173"]
+# Start the production server
+ENV NODE_ENV=production
+ENV PORT=3000
+CMD ["node", "server.js"]

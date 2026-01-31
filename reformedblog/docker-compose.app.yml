@@ -14,7 +14,7 @@ services:
     container_name: reformed-blog
     restart: unless-stopped
     environment:
-      - TZ=America/New_York
+      - TZ=${TIMEZONE:-America/New_York}
       - API_KEY=${BLOG_API_KEY:-development-api-key}
       - PORT=3000
     volumes:
