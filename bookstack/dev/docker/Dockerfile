@@ -42,9 +42,11 @@ RUN a2enmod rewrite && \
 
 # Use the default production configuration and update it as required
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && \
-    sed -i 's/memory_limit = 512M/memory_limit = 512M/g' "$PHP_INI_DIR/php.ini" && \
-    sed -i 's/upload_max_filesize = 500M/upload_max_filesize = 500M/g' "$PHP_INI_DIR/php.ini" && \
-    sed -i 's/post_max_size = 500M/post_max_size = 500M/g' "$PHP_INI_DIR/php.ini"
+    sed -i 's/memory_limit = 128M/memory_limit = 512M/g' "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 128M/g' "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/post_max_size = 8M/post_max_size = 128M/g' "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/max_execution_time = 30/max_execution_time = 600/g' "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/max_input_time = 60/max_input_time = 600/g' "$PHP_INI_DIR/php.ini"
 
 ENV APACHE_DOCUMENT_ROOT="/app/public"
 
