@@ -143,6 +143,8 @@ blog.faithconnect.us {
     import standard_log blog
 
     reverse_proxy reformed-blog:80 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
         fail_duration 10s
         lb_try_duration 2s
     }
