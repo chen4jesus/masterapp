@@ -81,6 +81,15 @@ get_app_dir() {
     echo "${SCRIPT_DIR}/${APPS[$app]}"
 }
 
+# Get appropriate compose file
+get_compose_file() {
+    if [[ -f "docker-compose.app.yml" ]]; then
+        echo "docker-compose.app.yml"
+    else
+        echo "docker-compose.yml"
+    fi
+}
+
 # Infrastructure commands
 infra_up() {
     print_info "Starting infrastructure (Caddy + network)..."
@@ -112,14 +121,11 @@ start_app() {
     print_info "Starting $app..."
     cd "$app_dir"
     
-    local compose_file="docker-compose.app.yml"
-    if [[ -f "docker-compose.local.yml" ]]; then
-        compose_file="docker-compose.local.yml"
-        print_info "Using local configuration (docker-compose.local.yml)"
-    fi
+    local compose_file=$(get_compose_file)
+    print_info "Using configuration: $compose_file"
     
     local env_arg=""
-    if [[ -f "$SCRIPT_DIR//.env" ]]; then
+    if [[ -f "$SCRIPT_DIR/.env" ]]; then
         env_arg="--env-file $SCRIPT_DIR/.env"
         print_info "Loading root .env file"
     fi
@@ -135,10 +141,7 @@ stop_app() {
     print_info "Stopping $app..."
     cd "$app_dir"
     
-    local compose_file="docker-compose.app.yml"
-    if [[ -f "docker-compose.local.yml" ]]; then
-        compose_file="docker-compose.local.yml"
-    fi
+    local compose_file=$(get_compose_file)
     
     local env_arg=""
     if [[ -f "$SCRIPT_DIR/.env" ]]; then
@@ -161,10 +164,7 @@ logs_app() {
     
     cd "$app_dir"
     
-    local compose_file="docker-compose.app.yml"
-    if [[ -f "docker-compose.local.yml" ]]; then
-        compose_file="docker-compose.local.yml"
-    fi
+    local compose_file=$(get_compose_file)
     
     docker compose -f "$compose_file" logs -f
 }
@@ -176,10 +176,7 @@ status_app() {
     echo "=== $app ==="
     cd "$app_dir"
     
-    local compose_file="docker-compose.app.yml"
-    if [[ -f "docker-compose.local.yml" ]]; then
-        compose_file="docker-compose.local.yml"
-    fi
+    local compose_file=$(get_compose_file)
     
     docker compose -f "$compose_file" ps
 }
