@@ -40,7 +40,7 @@ services:
       DB_DATABASE: bookstack
       DB_USERNAME: ${BOOKSTACK_DB_USER:-bookstack}
       DB_PASSWORD: ${BOOKSTACK_DB_PASSWORD:-bookstack}
-      APP_LANG: ${BOOKSTACK_APP_LANG:-zh_CN}
+      BOOKSTACK_APP_LANG: ${BOOKSTACK_APP_LANG:-zh_CN}
       APP_PROXIES: "*"
       SESSION_SECURE_COOKIE: "true"
       MAIL_DRIVER: ${MAIL_DRIVER:-smtp}

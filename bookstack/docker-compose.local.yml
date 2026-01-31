@@ -41,6 +41,7 @@ services:
       DB_DATABASE: bookstack
       DB_USERNAME: ${BOOKSTACK_DB_USER:-bookstack}
       DB_PASSWORD: ${BOOKSTACK_DB_PASSWORD:-bookstack}
+      BOOKSTACK_APP_LANG: ${BOOKSTACK_APP_LANG:-zh_CN}
       MAIL_DRIVER: ${MAIL_DRIVER:-log}
       MAIL_HOST: ${MAIL_HOST:-localhost}
       MAIL_PORT: ${MAIL_PORT:-1025}
