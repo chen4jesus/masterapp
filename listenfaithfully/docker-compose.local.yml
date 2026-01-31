@@ -14,7 +14,7 @@ services:
       - ./audiobooks:/audiobooks
       - ./podcasts:/podcasts
       - ./metadata:/metadata
-      - ./config:/config
+      - listenfaithfully_config:/config
     expose:
       - "80"
     networks:
@@ -31,3 +31,7 @@ services:
 networks:
   faithconnect:
     external: true
+
+volumes:
+  listenfaithfully_config:
+    name: faithconnect_listenfaithfully_config

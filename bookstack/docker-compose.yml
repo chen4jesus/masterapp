@@ -45,7 +45,8 @@ services:
     user: node
     volumes:
       - ./:/app
-    entrypoint: /usr/local/bin/entrypoint.node.sh
+      - ./dev/docker/entrypoint.node.sh:/usr/local/bin/entrypoint.node.sh
+    entrypoint: /bin/sh /usr/local/bin/entrypoint.node.sh
   mailhog:
     image: mailhog/mailhog
     ports:
