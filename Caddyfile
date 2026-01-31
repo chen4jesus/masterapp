@@ -22,7 +22,7 @@
 
 (standard_log) {
     log {
-        output file /var/log/caddy/ { args[0] }.log {
+        output file /var/log/caddy/{args[0]}.log {
             roll_size 50MB
             roll_keep 10
             roll_keep_for 720h
@@ -87,10 +87,7 @@ cc.faithconnect.us {
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
-            respond "🎛️ Command Center is currently starting or unavailable. Please try again in a moment." 503
-        }
+        respond "🎛️ Command Center is currently starting or unavailable. Please try again in a moment." 503
     }
 }
 
@@ -104,17 +101,14 @@ read.faithconnect.us {
     encode gzip zstd
 
     reverse_proxy bookstack-app:80 {
-        header_up Host { host }
-        header_up X-Real-IP { remote_host }
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
         fail_duration 10s
         lb_try_duration 2s
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
-            respond "📚 Read Faithfully is currently starting or unavailable. Please try again in a moment." 503
-        }
+        respond "📚 Read Faithfully is currently starting or unavailable. Please try again in a moment." 503
     }
 }
 
@@ -129,18 +123,15 @@ listen.faithconnect.us {
     encode @notSocket gzip zstd
 
     reverse_proxy listenfaithfully-audiobookshelf:80 {
-        header_up Host { host }
-        header_up X-Real-IP { remote_host }
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
         flush_interval -1
         fail_duration 10s
         lb_try_duration 2s
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
-            respond "🎧 Listen Faithfully is currently starting or unavailable. Please try again in a moment." 503
-        }
+        respond "🎧 Listen Faithfully is currently starting or unavailable. Please try again in a moment." 503
     }
 }
 
@@ -157,9 +148,6 @@ blog.faithconnect.us {
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
-            respond "📖 Reformed Blog is currently starting or unavailable. Please try again in a moment." 503
-        }
+        respond "📖 Reformed Blog is currently starting or unavailable. Please try again in a moment." 503
     }
 }

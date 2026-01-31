@@ -33,6 +33,7 @@ services:
     container_name: bookstack-app
     restart: unless-stopped
     environment:
+      APP_URL: https://read.faithconnect.us
       DB_CONNECTION: mysql
       DB_HOST: bookstack-db
       DB_PORT: 3306
