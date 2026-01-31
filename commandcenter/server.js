@@ -5,6 +5,7 @@ import yaml from 'js-yaml';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,15 +16,24 @@ const SITES_FILE = path.join(__dirname, 'sites.yaml');
 const BOOKS_FILE = path.join(__dirname, 'books.yaml');
 const DIST_PATH = path.join(__dirname, 'dist');
 
-app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-
-// Log all requests
+// Log all requests first
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
+
+app.use(cors());
+
+// Proxy configuration for BookStack Sync Service
+// These must be defined BEFORE body-parser to ensure the request stream is not consumed
+const SYNC_SERVICE_URL = process.env.SYNC_SERVICE_URL || 'http://cc-bookstack-sync:8080';
+app.use(['/api/sync', '/api/books', '/api/debug'], createProxyMiddleware({
+    target: SYNC_SERVICE_URL,
+    changeOrigin: true,
+}));
+
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Helper for Sites Config (sites.yaml)
 const readSitesConfig = () => {
