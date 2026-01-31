@@ -229,7 +229,7 @@ if (fs.existsSync(DIST_PATH)) {
     app.use(express.static(DIST_PATH));
     
     // For any other request, serve index.html (Client-side routing support)
-    app.get('/:path*', (req, res) => {
+    app.get('(.*)', (req, res) => {
         if (!req.path.startsWith('/api')) {
             res.sendFile(path.join(DIST_PATH, 'index.html'));
         } else {
