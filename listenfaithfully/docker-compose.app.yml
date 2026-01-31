@@ -15,6 +15,7 @@ services:
     restart: unless-stopped
     environment:
       - ROUTER_BASE_PATH=${LISTEN_ROUTER_BASE_PATH:-/listenfaithfully}
+      - EXP_PROXY_SUPPORT=1
     volumes:
       - listenfaithfully_audiobooks:/audiobooks
       - listenfaithfully_podcasts:/podcasts
