@@ -37,8 +37,8 @@ url = "/advanced-features"
 
 # footer menu
 [[footer]]
-name = "FaithfulReader"
-url = "https://faithfulreader.org"
+name = "Faithful Blog"
+url = "https://blog.faithconnect.us"
 weight = 1
 
 #[[footer]]
