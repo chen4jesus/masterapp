@@ -19,7 +19,7 @@ services:
       - "443:443/udp"  # HTTP/3 support
     volumes:
       # Master Caddyfile
-      - caddy_caddyfile:/etc/caddy/Caddyfile:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       # Dashboard files
       - caddy_dashboard:/var/www/dashboard:ro
       # Cloudflare origin certificates (for Claudable)
