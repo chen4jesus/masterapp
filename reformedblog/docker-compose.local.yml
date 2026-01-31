@@ -20,8 +20,8 @@ services:
       # LOCAL: Development mode
       - NODE_ENV=development
     volumes:
-      - ./content/chinese/blog:/app/content/chinese/blog
-      - ./assets/images:/app/assets/images
+      - reformedblog_content_chinese:/app/content/chinese/blog
+      - reformedblog_assets_images:/app/assets/images
     expose:
       - "80"
     networks:
@@ -35,3 +35,9 @@ services:
 networks:
   faithconnect:
     external: true
+
+volumes:
+  reformedblog_content_chinese:
+    name: faithconnect_reformedblog_content_chinese
+  reformedblog_assets_images:
+    name: faithconnect_reformedblog_assets_images

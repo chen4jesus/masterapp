@@ -13,7 +13,7 @@ services:
     container_name: commandcenter
     restart: unless-stopped
     volumes:
-      - ./services.yaml:/app/services.yaml
+      - commandcenter_services:/app/services.yaml
     expose:
       - "3001"   # Express API server
       - "5173"   # Vite preview server
@@ -37,3 +37,7 @@ services:
 networks:
   faithconnect:
     external: true
+
+volumes:
+  commandcenter_services:
+    name: faithconnect_commandcenter_services
