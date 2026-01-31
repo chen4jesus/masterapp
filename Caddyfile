@@ -87,8 +87,8 @@ cc.faithconnect.us {
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
+        @badgateway expression { err.status_code } in [502, 503]
+        handle @badgateway {
             respond "🎛️ Command Center is currently starting or unavailable. Please try again in a moment." 503
         }
     }
@@ -111,8 +111,8 @@ read.faithconnect.us {
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
+        @badgateway expression { err.status_code } in [502, 503]
+        handle @badgateway {
             respond "📚 Read Faithfully is currently starting or unavailable. Please try again in a moment." 503
         }
     }
@@ -137,8 +137,8 @@ listen.faithconnect.us {
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
+        @badgateway expression { err.status_code } in [502, 503]
+        handle @badgateway {
             respond "🎧 Listen Faithfully is currently starting or unavailable. Please try again in a moment." 503
         }
     }
@@ -157,8 +157,8 @@ blog.faithconnect.us {
     }
 
     handle_errors {
-        @502 - 503 expression { err.status_code } in [502, 503]
-        handle @502-503 {
+        @badgateway expression { err.status_code } in [502, 503]
+        handle @badgateway {
             respond "📖 Reformed Blog is currently starting or unavailable. Please try again in a moment." 503
         }
     }
