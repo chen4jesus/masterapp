@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: ['cc.faithconnect.us'],
     proxy: {
       '/api/local': {
         target: 'http://localhost:3001',
@@ -12,17 +13,20 @@ export default defineConfig({
       },
       // Spring Boot API for BookStack sync
       '/api/sync': {
-        target: 'http://localhost:8082',
+        target: 'http://cc-bookstack-sync:8080',
         changeOrigin: true,
       },
       '/api/books': {
-        target: 'http://localhost:8082',
+        target: 'http://cc-bookstack-sync:8080',
         changeOrigin: true,
       },
       '/api/debug': {
-        target: 'http://localhost:8082',
+        target: 'http://cc-bookstack-sync:8080',
         changeOrigin: true,
       }
     }
+  },
+  preview: {
+    allowedHosts: ['cc.faithconnect.us']
   }
 })

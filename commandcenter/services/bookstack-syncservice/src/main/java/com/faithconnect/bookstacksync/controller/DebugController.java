@@ -28,7 +28,7 @@ public class DebugController {
             
             // Make the request and return the raw response
             ResponseEntity<String> response = restTemplate.exchange(
-                    "https://books.faithconnect.us/api/books",
+                    "https://read.faithconnect.us/api/books",
                     org.springframework.http.HttpMethod.GET,
                     requestEntity,
                     String.class

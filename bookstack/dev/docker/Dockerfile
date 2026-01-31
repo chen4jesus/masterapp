@@ -1,3 +1,14 @@
+# --- Build Stage ---
+FROM node:22-alpine AS asset-builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run production
+
+# --- Final Stage ---
 FROM php:8.3-apache
 
 # Install additional dependencies
@@ -31,16 +42,24 @@ RUN a2enmod rewrite && \
 
 # Use the default production configuration and update it as required
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && \
-    sed -i 's/memory_limit = 128M/memory_limit = 512M/g' "$PHP_INI_DIR/php.ini" && \
-    sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 500M/g' "$PHP_INI_DIR/php.ini" && \
-    sed -i 's/post_max_size = 8M/post_max_size = 500M/g' "$PHP_INI_DIR/php.ini"
+    sed -i 's/memory_limit = 512M/memory_limit = 512M/g' "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/upload_max_filesize = 500M/upload_max_filesize = 500M/g' "$PHP_INI_DIR/php.ini" && \
+    sed -i 's/post_max_size = 500M/post_max_size = 500M/g' "$PHP_INI_DIR/php.ini"
 
 ENV APACHE_DOCUMENT_ROOT="/app/public"
 
 WORKDIR /app
 
-# Copy entrypoint scripts to /usr/local/bin (outside /app so volume mounts don't overwrite)
-# Convert Windows line endings to Unix and ensure execute permissions
+# Copy application files
+COPY . .
+
+# Copy built assets from builder stage
+COPY --from=asset-builder /app/public/dist ./public/dist
+
+# Backup assets to a safe place so the entrypoint can restore them if a volume is mounted
+RUN cp -R ./public/dist /usr/local/bin/bookstack_dist_backup
+
+# Copy entrypoint scripts
 COPY dev/docker/entrypoint.app.sh /usr/local/bin/entrypoint.app.sh
 COPY dev/docker/entrypoint.node.sh /usr/local/bin/entrypoint.node.sh
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.*.sh && chmod +x /usr/local/bin/entrypoint.*.sh
