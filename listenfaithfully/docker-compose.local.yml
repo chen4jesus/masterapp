@@ -9,7 +9,8 @@ services:
   listenfaithfully-audiobookshelf:
     image: my-audiobookshelf:latest
     container_name: listenfaithfully-audiobookshelf
-    restart: unless-stopped
+    environment:
+      - ROUTER_BASE_PATH=/listenfaithfully
     volumes:
       - ./audiobooks:/audiobooks
       - ./podcasts:/podcasts
@@ -20,8 +21,8 @@ services:
     networks:
       - faithconnect
     healthcheck:
-      # LOCAL: Use simple healthcheck without path prefix
-      test: ["CMD", "curl", "-f", "http://localhost:80/healthcheck"]
+      # LOCAL: Use simple healthcheck with path prefix
+      test: ["CMD", "curl", "-f", "http://localhost:80/listenfaithfully/healthcheck"]
       interval: 10s
       timeout: 5s
       retries: 5

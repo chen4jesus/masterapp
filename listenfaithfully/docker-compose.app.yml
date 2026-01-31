@@ -14,7 +14,7 @@ services:
     container_name: listenfaithfully-audiobookshelf
     restart: unless-stopped
     environment:
-      - ROUTER_BASE_PATH=/
+      - ROUTER_BASE_PATH=/listenfaithfully
     volumes:
       - ./audiobooks:/audiobooks
       - ./podcasts:/podcasts
@@ -25,7 +25,7 @@ services:
     networks:
       - faithconnect
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/healthcheck"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/listenfaithfully/healthcheck"]
       interval: 10s
       timeout: 5s
       retries: 5
