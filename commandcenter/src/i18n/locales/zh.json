@@ -364,6 +364,10 @@
     "statusPending": "等待中",
     "statusSyncing": "同步中...",
     "statusCompleted": "已完成",
-    "statusFailed": "失败"
+    "statusFailed": "失败",
+    "btnPurge": "清空目标站点",
+    "confirmPurge": "您确定要从目标站点删除所有书籍吗？此操作无法撤消。",
+    "purgeSuccess": "目标站点已成功清空。",
+    "errorPurge": "清空目标站点失败。"
   }
 }

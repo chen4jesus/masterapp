@@ -249,6 +249,30 @@ const BookStackSync = () => {
     }
   };
 
+  // Handle purge
+  const handlePurge = async () => {
+    if (!window.confirm(t('sync.confirmPurge'))) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+      
+      await springBootApi.destroy();
+      
+      setSuccess(t('sync.purgeSuccess'));
+      setDestinationBooks([]);
+    } catch (err) {
+      setError(t('sync.errorPurge'));
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   // Handle tab change
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -813,7 +837,7 @@ const BookStackSync = () => {
       {/* Destination Books Tab */}
       {activeTab === 'destination' && (
         <div>
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
             <button
               onClick={loadDestinationBooks}
               disabled={loading}
@@ -832,9 +856,34 @@ const BookStackSync = () => {
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading ? <Loader2 size={16} /> : <RefreshCw size={16} />}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
               {t('sync.btnRefreshDest')}
             </button>
+
+            {destinationBooks.length > 0 && (
+              <button
+                onClick={handlePurge}
+                disabled={loading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.6 : 1,
+                  boxShadow: '0 8px 24px rgba(239, 68, 68, 0.35)',
+                }}
+              >
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                {t('sync.btnPurge')}
+              </button>
+            )}
           </div>
 
           {destinationBooks.length > 0 ? (

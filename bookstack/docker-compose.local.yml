@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
     environment:
       # LOCAL: Use localhost:8002 instead of domain
-      APP_URL: http://read.faithconnect.us
+      APP_URL: http://localhost:8002
       DB_CONNECTION: mysql
       DB_HOST: bookstack-db
       DB_PORT: 3306

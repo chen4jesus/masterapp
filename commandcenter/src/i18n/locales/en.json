@@ -364,6 +364,10 @@
     "statusPending": "Pending",
     "statusSyncing": "Syncing...",
     "statusCompleted": "Completed",
-    "statusFailed": "Failed"
+    "statusFailed": "Failed",
+    "btnPurge": "Purge Destination",
+    "confirmPurge": "Are you sure you want to delete ALL books from the destination? This action cannot be undone.",
+    "purgeSuccess": "Destination purged successfully.",
+    "errorPurge": "Failed to purge destination."
   }
 }
