@@ -12,9 +12,9 @@ services:
     environment:
       - ROUTER_BASE_PATH=/listenfaithfully
     volumes:
-      - ./audiobooks:/audiobooks
-      - ./podcasts:/podcasts
-      - ./metadata:/metadata
+      - listenfaithfully_audiobooks:/audiobooks
+      - listenfaithfully_podcasts:/podcasts
+      - listenfaithfully_metadata:/metadata
       - listenfaithfully_config:/config
     expose:
       - "80"
@@ -36,3 +36,9 @@ networks:
 volumes:
   listenfaithfully_config:
     name: faithconnect_listenfaithfully_config
+  listenfaithfully_audiobooks:
+    name: faithconnect_listenfaithfully_audiobooks
+  listenfaithfully_podcasts:
+    name: faithconnect_listenfaithfully_podcasts
+  listenfaithfully_metadata:
+    name: faithconnect_listenfaithfully_metadata
