@@ -47,6 +47,8 @@ services:
       MAIL_PORT: ${MAIL_PORT:-1025}
     volumes:
       - .:/app
+      - bookstack_uploads:/app/public/uploads
+      - bookstack_storage:/app/storage
     expose:
       - "80"
     networks:
@@ -64,3 +66,7 @@ networks:
 volumes:
   bookstack_db:
     name: faithconnect_bookstack_db
+  bookstack_uploads:
+    name: faithconnect_bookstack_uploads
+  bookstack_storage:
+    name: faithconnect_bookstack_storage
