@@ -86,14 +86,14 @@ return [
     // Default locale to use
     // A default variant is also stored since Laravel can overwrite
     // app.locale when dynamically setting the locale in-app.
-    'locale' => env('APP_LANG', 'en'),
-    'default_locale' => env('APP_LANG', 'en'),
+    'locale' => env('APP_LANG', 'zh_CN'),
+    'default_locale' => env('APP_LANG', 'zh_CN'),
 
     //  Application Fallback Locale
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'zh_CN',
 
     // Faker Locale
-    'faker_locale' => 'en_GB',
+    'faker_locale' => 'zh_CN',
 
     // Auto-detect the locale for public users
     // For public users their locale can be guessed by headers sent by their
@@ -102,7 +102,7 @@ return [
     'auto_detect_locale' => env('APP_AUTO_LANG_PUBLIC', true),
 
     // Encryption key
-    'key' => env('APP_KEY', 'AbAZchsay4uBTU33RubBzLKw203yqSqr'),
+    'key' => env('APP_KEY', 'sm7Kk4gXAOq3SDroXsmMJjVdyjfXle9V'),
 
     // Encryption cipher
     'cipher' => 'AES-256-CBC',
