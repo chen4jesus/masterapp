@@ -1,0 +1,149 @@
+@use "vars";
+@use "mixins";
+
+// Bible verse styles
+.bible-verse {
+  color: #0288D1;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  transition: color 0.2s ease, text-decoration-style 0.2s ease;
+  
+  &:hover {
+    color: #01579B;
+    text-decoration-style: solid;
+  }
+}
+
+.verse-content {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: vars.$m;
+  
+  .bible-verses {
+    h4 {
+      margin-bottom: vars.$m;
+      color: var(--color-primary);
+      font-weight: bold;
+    }
+    
+    .verses {
+      .verse {
+        margin-bottom: vars.$s;
+        display: flex;
+        
+        .verse-number {
+          color: #666;
+          font-weight: bold;
+          margin-right: vars.$xs;
+          min-width: 20px;
+          
+          @include mixins.whenDark {
+            color: #aaa;
+          }
+        }
+        
+        .verse-text {
+          line-height: 1.6;
+        }
+      }
+    }
+  }
+}
+
+// Loading and error message styles
+.loading-message, .error-message {
+  padding: vars.$m;
+  text-align: center;
+}
+
+.loading-message {
+  .loading-container {
+    margin: vars.$m auto;
+  }
+}
+
+.error-message {
+  p {
+    margin-bottom: vars.$m;
+    
+    &:first-child {
+      font-weight: bold;
+      font-size: 1.1em;
+      color: var(--color-danger);
+    }
+  }
+}
+
+// Bible verse modal
+[component="bible-verse-modal"] {
+  z-index: 99999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .bible-popup-body {
+    max-width: 600px;
+    width: 90%;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    
+    @include mixins.whenDark {
+      background-color: #333;
+    }
+  }
+  
+  &.active .bible-popup-body {
+    transform: translateY(0);
+  }
+  
+  .bible-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: vars.$m;
+    background-color: var(--color-primary);
+    color: #fff;
+    
+    .bible-popup-title {
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    
+    .bible-popup-header-close {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+} 

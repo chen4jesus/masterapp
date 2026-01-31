@@ -1,0 +1,369 @@
+{
+  "app": {
+    "title": "BookStack同步工具",
+    "loading": "加载中...",
+    "noBooks": "尚未加载书籍。点击\"{{action}}\"开始。",
+    "apiStatusOnline": "API服务器连接成功！"
+  },
+  "tabs": {
+    "sourceBooks": "源书籍",
+    "destinationBooks": "目标书籍",
+    "configuration": "配置"
+  },
+  "buttons": {
+    "loadSourceBooks": "加载源书籍",
+    "loadDestinationBooks": "加载目标书籍",
+    "syncSelected": "同步选中书籍",
+    "deleteSelected": "删除选中",
+    "destroyAll": "全部销毁",
+    "close": "关闭",
+    "cancel": "取消",
+    "delete": "删除",
+    "dismiss": "忽略",
+    "viewDetails": "查看详情",
+    "details": "详情"
+  },
+  "filters": {
+    "search": "按标题或描述搜索书籍...",
+    "allLanguages": "所有语言",
+    "english": "英语",
+    "chinese": "中文",
+    "allStatus": "所有状态",
+    "inDestination": "已在目标中",
+    "currentlySyncing": "正在同步",
+    "notSynced": "未同步",
+    "sortNameAsc": "名称 (A-Z)",
+    "sortNameDesc": "名称 (Z-A)",
+    "sortNewest": "最新优先",
+    "sortOldest": "最旧优先",
+    "sortRecentlyUpdated": "最近更新",
+    "sortLeastRecentlyUpdated": "最少更新"
+  },
+  "status": {
+    "booksFound": "找到 {{count}} 本书",
+    "booksFound_plural": "找到 {{count}} 本书",
+    "booksSelected": "已选择 {{count}} 本",
+    "booksSelectedTotal": "已选择 {{count}}/{{total}} 本书",
+    "inDestination": "已在目标站点",
+    "notSynced": "未同步",
+    "syncing": "同步中...",
+    "pending": "等待中",
+    "completed": "已完成",
+    "failed": "失败",
+    "destroyed": "已销毁",
+    "destroying": "销毁中...",
+    "deleted": "已删除",
+    "deleting": "删除中...",
+    "overallSyncProgress": "总体同步进度...",
+    "lastSyncAt": "最后同步时间:",
+    "syncDuration": "总耗时"
+  },
+  "modals": {
+    "confirmDelete": "确认删除",
+    "confirmDeleteMessage": "您确定要从目标 BookStack 实例中删除\"{{name}}\"吗？",
+    "confirmDestroyAll": "销毁所有书籍",
+    "confirmDestroyMessage": "您确定要销毁目标 BookStack 实例中的所有书籍吗？此操作无法撤消。"
+  },
+  "selection": {
+    "selectAll": "全选",
+    "deselectAll": "取消全选"
+  },
+  "notifications": {
+    "apiConnected": "已连接到 Spring Boot API。使用自定义配置。",
+    "apiConnectedDefault": "已连接到 Spring Boot API。使用默认配置。",
+    "apiInvalidCredentials": "已连接到 Spring Boot API，但源凭据无效。",
+    "apiCredentialsVerificationFailed": "已连接到 Spring Boot API，但凭据验证失败。",
+    "apiConnectionFailed": "无法连接到 Spring Boot API。请确保它正在运行。",
+    "loadBooksFailed": "加载书籍失败。请检查 Spring Boot API。",
+    "loadDestinationBooksFailed": "加载目标书籍失败。请检查 Spring Boot API。",
+    "syncSuccess": "所有 {{count}} 本书同步成功！",
+    "syncPartialSuccess": "同步完成：{{succeeded}} 成功，{{failed}} 失败。",
+    "syncFailed": "同步书籍失败。请检查 Spring Boot API。",
+    "selectBooksToSync": "请选择至少一本书进行同步",
+    "deleteSuccess": "书籍\"{{name}}\"删除成功！",
+    "deleteMultipleSuccess": "所有 {{count}} 本书删除成功！",
+    "deletePartialSuccess": "删除完成：{{succeeded}} 成功，{{failed}} 失败。",
+    "deleteFailed": "删除书籍\"{{name}}\"失败。请检查 Spring Boot API。",
+    "deleteMultipleFailed": "删除书籍失败。请检查 Spring Boot API。",
+    "selectBooksToDelete": "请选择至少一本书进行删除",
+    "destroySuccess": "所有书籍已成功销毁。",
+    "destroyFailed": "销毁书籍失败。请检查 Spring Boot API。"
+  },
+  "tooltips": {
+    "listView": "列表视图",
+    "gridView": "网格视图",
+    "inDestination": "此书已存在于目标 BookStack 中",
+    "notSynced": "此书尚未同步"
+  },
+  "book": {
+    "updated": "更新时间：",
+    "noDescription": "暂无描述"
+  },
+  "configuration": {
+    "title": "配置",
+    "subTitle": "配置源和目标 BookStack 实例以进行同步",
+    "bannerNote": "提示",
+    "bannerText": "凭据存储在浏览器的会话存储中，并随每个请求作为标头发送。关闭标签页后将清除。",
+    "sourceSettings": "源 BookStack 设置",
+    "destinationSettings": "目标 BookStack 设置",
+    "sourceUrl": "源 URL",
+    "sourceApiToken": "源 API 令牌",
+    "sourceToken": "源令牌",
+    "destinationUrl": "目标 URL",
+    "destinationApiToken": "目标 API 令牌",
+    "destinationToken": "目标令牌",
+    "targetBookId": "目标书籍 ID",
+    "optional": "可选",
+    "targetBookIdHelp": "留为 0 可在根级别创建书籍。设置特定书籍 ID 可在该书籍内创建书籍。",
+    "saveConfig": "保存配置",
+    "saving": "保存中...",
+    "verifyCredentials": "验证凭据",
+    "verifying": "验证中...",
+    "configLoaded": "配置加载成功。",
+    "configSaved": "配置保存成功。",
+    "configSaveFailed": "保存配置失败",
+    "verifyFailed": "验证凭据失败",
+    "sourceCredentials": "源凭据",
+    "destinationCredentials": "目标凭据",
+    "valid": "有效",
+    "invalid": "无效",
+    "sourceUrlRequired": "源 URL 是必需的。",
+    "sourceTokenRequired": "源 API 令牌是必需的。",
+    "destinationUrlRequired": "目标 URL 是必需的。",
+    "destinationTokenRequired": "目标 API 令牌是必需的。",
+    "invalidSourceUrl": "无效的源 URL。",
+    "invalidDestinationUrl": "无效的目标 URL。",
+    "invalidUrl": "请输入有效的 URL。",
+    "errorSavingConfig": "保存配置时出错。",
+    "errorVerifyingCredentials": "验证凭据时出错。",
+    "allCredentialsValid": "所有凭据均有效。",
+    "sourceCredentialsValid": "源凭据有效。",
+    "destinationCredentialsValid": "目标凭据有效。",
+    "sourceCredentialsInvalid": "源凭据无效。",
+    "destinationCredentialsInvalid": "目标凭据无效。",
+    "allCredentialsInvalid": "所有凭据均无效。"
+  },
+  "tableHeaders": {
+    "name": "名称",
+    "description": "描述",
+    "updated": "更新时间",
+    "status": "状态",
+    "actions": "操作"
+  },
+  "syncButton": {
+    "label": "同步选中书籍"
+  },
+  "sidebar": {
+    "brand": "控制中心",
+    "dashboard": "仪表盘",
+    "services": "服务",
+    "websites": "网站管理",
+    "monitoring": "监控",
+    "settings": "设置",
+    "adminUser": "管理员",
+    "switchToLight": "切换至浅色模式",
+    "switchToDark": "切换至深色模式",
+    "user": {
+      "name": "管理员",
+      "role": "系统管理员"
+    }
+  },
+  "dashboard": {
+    "title": "仪表盘概览",
+    "subtitle": "欢迎回来，这是今天的运行情况。",
+    "activeServices": "运行中的服务",
+    "websitesOnline": "在线网站",
+    "securityAlerts": "安全警报",
+    "systemLoad": "系统负载",
+    "newThisWeek": "本周新增 {{count}} 个",
+    "allSystemsOperational": "所有系统运行正常",
+    "noActiveThreats": "无活动威胁",
+    "vsLastHour": "较上一小时 {{percent}}%"
+  },
+  "services": {
+    "title": "服务清单",
+    "subtitle": "管理和配置您的基础设施集成服务",
+    "status": {
+      "active": "正在运行",
+      "available": "可用",
+      "comingSoon": "敬请期待"
+    },
+    "labels": {
+      "open": "打开"
+    },
+    "items": {
+      "sync": {
+        "name": "BookStack 同步",
+        "description": "在两个 BookStack 实例之间同步书籍和内容。非常适合备份和迁移。"
+      },
+      "database": {
+        "name": "数据库管理器",
+        "description": "管理数据库连接，运行查询，执行跨架构备份。"
+      },
+      "cloud": {
+        "name": "云存储",
+        "description": "连接和管理 S3、Azure Blob 和 Google Cloud Storage 等云存储提供商。"
+      },
+      "automation": {
+        "name": "自动化",
+        "description": "为您的服务创建和管理自动工作流、定时任务和 webhooks。"
+      }
+    }
+  },
+  "websites": {
+    "title": "网站管理",
+    "subtitle": "监控和管理您连接的 Web 资产",
+    "addNew": "添加新站",
+    "noSites": "未配置任何站点",
+    "startPrompt": "点击“添加新站点”连接您的第一个网站。",
+    "addModal": {
+      "title": "添加新站点",
+      "subtitle": "配置 FaithConnect Books 站点",
+      "errorSave": "保存站点失败。请重试。",
+      "fieldName": "站点名称",
+      "fieldUrl": "URL",
+      "fieldSlug": "别名",
+      "fieldApiToken": "API 令牌",
+      "fieldDescription": "描述",
+      "optional": "(可选)",
+      "namePlaceholder": "我的超赞书籍网站",
+      "urlPlaceholder": "https://example.com",
+      "slugPlaceholder": "my-site",
+      "tokenPlaceholder": "令牌 abc123:xyz789",
+      "descPlaceholder": "该站点的简短描述...",
+      "storageHint": "本地存储在 {{file}} 中",
+      "cancel": "取消",
+      "save": "保存站点",
+      "saving": "正在保存..."
+    },
+    "uptime": "在线率",
+    "books": "书籍",
+    "manage": "管理",
+    "healthy": "健康"
+  },
+  "siteDetails": {
+    "loading": "正在加载站点详情...",
+    "notFound": "找不到站点。",
+    "backToWebsites": "返回网站管理",
+    "tabs": {
+      "overview": "概览",
+      "books": "书籍 ({{count}})",
+      "settings": "设置"
+    },
+    "overview": {
+      "panelTitle": "概览面板",
+      "comingSoon": "站点分析和摘要即将推出"
+    },
+    "books": {
+      "searchPlaceholder": "搜索书籍...",
+      "sortByName": "按名称排序",
+      "sortByDate": "按日期排序",
+      "gridView": "网格视图",
+      "listView": "列表视图",
+      "noBooksFound": "未找到书籍",
+      "adjustFilters": "尝试调整您的搜索或过滤器。",
+      "viewBook": "查看书籍"
+    },
+    "settings": {
+      "title": "服务配置",
+      "subtitle": "更新此服务的连接详情",
+      "updateButton": "更新配置",
+      "deleteButton": "删除服务",
+      "deleteConfirm": "您确定要删除此服务吗？此操作无法撤消。",
+      "successMessage": "服务配置更新成功！",
+      "errorMessage": "更新服务失败: {{error}}",
+      "fields": {
+        "name": "服务名称",
+        "url": "URL",
+        "slug": "Slug",
+        "apiToken": "API 令牌",
+        "apiTokenHelp": "敏感令牌本地存储在 sites.yaml 中",
+        "description": "描述"
+      },
+      "blogIntegration": {
+        "title": "博客集成",
+        "apiUrl": "博客 API URL",
+        "apiKey": "博客 API 令牌"
+      }
+    }
+  },
+  "bookDetails": {
+    "loading": "正在加载书籍内容...",
+    "notFound": "找不到书籍。",
+    "backToSite": "返回站点",
+    "typeLabel": "书籍",
+    "created": "创建于 {{date}}",
+    "configure": "配置",
+    "pages": "页面",
+    "pageCount": "{{count}} 个页面",
+    "pushSelected": "推送选中的 {{count}} 项",
+    "pushingSelected": "正在推送选中项...",
+    "pushComplete": "批量推送完成！\n成功：{{success}}\n失败：{{errors}}",
+    "pushSuccess": "成功！\"{{name}}\" 已发布到博客。",
+    "pushFailed": "推送失败：{{error}}",
+    "bulkPushConfirm": "您确定要将 {{count}} 个页面推送到博客吗？",
+    "table": {
+      "id": "ID",
+      "title": "页面标题",
+      "slug": "Slug",
+      "created": "创建时间",
+      "actions": "操作"
+    },
+    "actions": {
+      "view": "查看",
+      "push": "推送",
+      "pushing": "推送中..."
+    },
+    "noPages": "本书中未找到页面",
+    "modal": {
+      "contentLoading": "正在加载内容...",
+      "noContent": "暂无内容。",
+      "pushToBlog": "推送到博客",
+      "pushingContent": "正在推送内容..."
+    }
+  },
+  "pageDetails": {
+    "loading": "正在加载内容...",
+    "notFound": "找不到页面。",
+    "contentNotAvailable": "暂无内容。",
+    "backToBook": "返回书籍",
+    "typeLabel": "页面",
+    "untitledPage": "无标题页面",
+    "updated": "最后更新于 {{date}}",
+    "owner": "所有者：{{name}}"
+  },
+  "sync": {
+    "loading": "正在加载...",
+    "errorLoadBooks": "加载书籍失败。请检查您的配置。",
+    "errorLoadDestBooks": "加载目标书籍失败。请检查您的配置。",
+    "errorSync": "同步书籍失败。请检查 API 配置。",
+    "syncSuccessAll": "所有 {{count}} 本书籍已成功同步！",
+    "syncSuccessPartial": "同步完成：{{success}} 成功，{{failed}} 失败。",
+    "tabSource": "源书籍 ({{count}})",
+    "tabDestination": "目标书籍 ({{count}})",
+    "tabConfig": "配置",
+    "connected": "已连接",
+    "notConnected": "未连接",
+    "backToServices": "返回服务列表",
+    "title": "BookStack 同步",
+    "subtitle": "在 BookStack 实例之间同步书籍",
+    "dismiss": "关闭",
+    "btnLoadSource": "加载源书籍",
+    "btnRefreshDest": "刷新目标书籍",
+    "btnSelectAll": "全选",
+    "btnDeselectAll": "取消全选",
+    "btnSyncSelected": "同步选中的 {{count}} 项",
+    "btnSelectToSync": "选择要同步的书籍",
+    "searchPlaceholder": "搜索书籍...",
+    "noBooksLoaded": "未加载书籍",
+    "clickToLoad": "点击“加载源书籍”开始",
+    "noDestBooks": "没有目标书籍",
+    "syncToSee": "从源同步一些书籍以在此处查看",
+    "statusInDest": "已在目标中",
+    "statusNotSynced": "未同步",
+    "statusPending": "等待中",
+    "statusSyncing": "同步中...",
+    "statusCompleted": "已完成",
+    "statusFailed": "失败"
+  }
+}

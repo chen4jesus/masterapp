@@ -1,0 +1,20 @@
+{{/*
+Table of Contents Partial
+This generates the TOC HTML for navigation
+*/}}
+{{ $toc := .TableOfContents }}
+{{ $collapsed := .Collapsed }}
+{{ with $toc }}
+{{ if gt (len .) 0 }}
+<div class="toc-wrapper mb-8">
+  <details {{ if not $collapsed }}open{{ end }} class="toc-details">
+    <summary class="toc-summary cursor-pointer rounded-lg bg-theme-light px-4 py-3 font-semibold text-dark dark:bg-darkmode-theme-light dark:text-darkmode-dark">
+      <span class="mr-2">{{ T "toc" | default "目录" }}</span>
+    </summary>
+    <div class="toc-content mt-4 rounded-lg border border-border p-4 dark:border-darkmode-border">
+      {{ . }}
+    </div>
+  </details>
+</div>
+{{ end }}
+{{ end }}

@@ -1,0 +1,16 @@
+################ Chinese language ##################
+[zh-cn]
+languageName = "中文"
+languageCode = "zh-cn"
+contentDir = "content/chinese"
+weight = 1
+
+[zh-cn.params]
+copyright = "copyright © faithconnect.us"
+[zh-cn.params.navigation_button]
+label = "联系我们"
+[zh-cn.params.announcement]
+content = "<span class='text-center block'>♥️ 喜欢 FaithConnect？ <a class='underline' href='https://www.faithconnect.us' target='_blank' rel='noopener'>请访问 FaithConnect 并支持我们的工作。</a></span>"
+[zh-cn.params.cookies]
+content = "本网站使用 Cookie。继续使用本网站即表示您同意我们的 Cookie 政策。"
+button = "我接受"

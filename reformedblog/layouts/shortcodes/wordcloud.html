@@ -1,0 +1,236 @@
+
+{{- $source := .Get "source" | default "tags" -}}
+{{- $limit := .Get "limit" | default 50 -}}
+{{- $minSize := float (.Get "minSize" | default 1.0) -}}
+{{- $maxSize := float (.Get "maxSize" | default 3.5) -}}
+{{- $class := .Get "class" | default "" -}}
+
+{{- $taxonomy := index .Site.Taxonomies $source -}}
+{{- if $taxonomy -}}
+  {{- $terms := $taxonomy.ByCount -}}
+  {{- if gt (len $terms) 0 -}}
+
+    {{- /* 1. Identify top N terms */ -}}
+    {{- $sortedTerms := sort $terms ".Count" "desc" -}}
+    {{- $topTerms := first $limit $sortedTerms -}}
+
+    {{- /* 2. Calculate range for size weights */ -}}
+    {{- $maxCount := (index $topTerms 0).Count -}}
+    {{- $minCount := (index (last 1 $topTerms) 0).Count -}}
+    {{- $countRange := sub $maxCount $minCount -}}
+    {{- if eq $countRange 0 -}} {{ $countRange = 1 }} {{- end -}}
+    {{- $sizeRange := sub $maxSize $minSize -}}
+
+    {{- $uniqueId := md5 (printf "%s-%d" $source now.UnixNano) -}}
+    <div class="word-cloud-3d-container {{ $class }}" id="wc-3d-{{ $uniqueId }}">
+      <div class="word-cloud-3d-canvas" id="canvas-{{ $uniqueId }}">
+        {{- range $index, $term := $topTerms -}}
+          {{- $weight := div (float (sub .Count $minCount)) $countRange -}}
+          {{- $fontSize := add $minSize (mul $weight $sizeRange) -}}
+          <a href="{{ "blog" | relLangURL }}?tags={{ .Page.Title | urlquery }}"
+             class="word-cloud-3d-tag"
+             style="font-size: {{ $fontSize }}rem; --word-weight: {{ $weight }};"
+             title="{{ .Count }} 次引用"
+             data-tag="{{ .Page.Title }}">
+            {{ .Page.Title }}
+          </a>
+        {{- end -}}
+      </div>
+    </div>
+
+    <style>
+      .word-cloud-3d-container {
+        width: 100vw;
+        height: 95vh;
+        max-height: 900px;
+        min-height: 500px;
+        margin: -2rem calc(50% - 50vw) 2rem calc(50% - 50vw);
+        background: radial-gradient(circle at center, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+        border-radius: 3.5rem;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 1200px;
+        touch-action: none;
+        cursor: grab;
+      }
+
+      .word-cloud-3d-container:active {
+        cursor: grabbing;
+      }
+
+      .word-cloud-3d-canvas {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+      }
+
+      .word-cloud-3d-tag {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        text-decoration: none !important;
+        white-space: nowrap;
+        font-weight: calc(400 + (var(--word-weight) * 500));
+        color: hsl(calc(220 + (var(--word-weight) * 80)),
+                   calc(50% + (var(--word-weight) * 40%)),
+                   calc(50% - (var(--word-weight) * 15%)));
+        transition: opacity 0.1s linear, color 0.3s ease, transform 0.1s ease-out;
+        text-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.5rem;
+        user-select: none;
+      }
+
+      .dark .word-cloud-3d-tag {
+        color: hsl(calc(200 + (var(--word-weight) * 90)),
+                   calc(60% + (var(--word-weight) * 30%)),
+                   calc(75% + (var(--word-weight) * 10%)));
+        text-shadow: 0 0 15px rgba(255,255,255,0.1);
+      }
+
+      .word-cloud-3d-tag:hover {
+        color: #3b82f6 !important;
+        background: rgba(59, 130, 246, 0.1);
+        z-index: 1000 !important;
+        opacity: 1 !important;
+      }
+
+      .dark .word-cloud-3d-tag:hover {
+        color: #60a5fa !important;
+        background: rgba(96, 165, 250, 0.2);
+      }
+
+      @media (max-width: 768px) {
+        .word-cloud-3d-container {
+          width: 120vw;
+          height: 70vh;
+          max-width: 130%;
+          min-height: 500px;
+          margin: -1rem calc(50% - 50vw) 0rem calc(50% - 50vw);
+          border-radius: 2rem;
+          transform: translateX(-5rem) translateY(-2rem);
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .word-cloud-3d-container {
+          transform: translateX(-6rem);
+        }
+      }
+    </style>
+
+    <script>
+    (function() {
+      const container = document.getElementById('wc-3d-{{ $uniqueId }}');
+      const canvas = document.getElementById('canvas-{{ $uniqueId }}');
+      if (!container || !canvas) return;
+
+      const items = Array.from(canvas.querySelectorAll('.word-cloud-3d-tag'));
+      const tags = items.map((el, i) => ({
+        el,
+        x: 0, y: 0, z: 0,
+        isTop: i === 0 // The first element is the most frequent tag in Hugo terms
+      }));
+
+      const radius = Math.min(container.offsetWidth, container.offsetHeight) * 0.4;
+      let angleX = 0;
+      let angleY = 0;
+      let isDragging = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      // Fibonacci Sphere distribution
+      const count = tags.length;
+      tags.forEach((tag, i) => {
+        // Front-facing index mapping (i=0 -> Front)
+        const phi = Math.acos(1 - 2 * (i + 0.5) / count);
+        const theta = Math.sqrt(count * Math.PI) * phi;
+
+        // Z is "front/back", Y is "up/down", X is "left/right"
+        // We set initial positions such that i=0 lands close to z = radius
+        tag.x = radius * Math.cos(theta) * Math.sin(phi);
+        tag.y = radius * Math.sin(theta) * Math.sin(phi);
+        tag.z = radius * Math.cos(phi);
+      });
+
+      function rotate() {
+        if (!isDragging) {
+          // Apply friction to dampen rotation when not dragging
+          angleX *= 0.95;
+          angleY *= 0.95;
+        }
+
+        const cosX = Math.cos(angleX);
+        const sinX = Math.sin(angleX);
+        const cosY = Math.cos(angleY);
+        const sinY = Math.sin(angleY);
+
+        tags.forEach(tag => {
+          // Rotate X
+          const y1 = tag.y * cosX - tag.z * sinX;
+          const z1 = tag.z * cosX + tag.y * sinX;
+          // Rotate Y
+          const x2 = tag.x * cosY + z1 * sinY;
+          const z2 = z1 * cosY - tag.x * sinY;
+
+          tag.x = x2;
+          tag.y = y1;
+          tag.z = z2;
+
+          const scale = 1000 / (1000 + tag.z);
+          const alpha = (tag.z + radius) / (2 * radius);
+
+          tag.el.style.transform = `translate3d(${tag.x}px, ${tag.y}px, ${tag.z}px) scale(${scale})`;
+          tag.el.style.opacity = 0.15 + 0.85 * alpha;
+          tag.el.style.zIndex = Math.round(tag.z + radius);
+        });
+
+        requestAnimationFrame(rotate);
+      }
+
+      // Drag Interaction
+      const onStart = (x, y) => {
+        isDragging = true;
+        lastX = x;
+        lastY = y;
+      };
+
+      const onMove = (x, y) => {
+        if (!isDragging) return;
+        const dx = x - lastX;
+        const dy = y - lastY;
+
+        // Convert distance to rotation velocity
+        angleY = dx * 0.002;
+        angleX = -dy * 0.002;
+
+        lastX = x;
+        lastY = y;
+      };
+
+      const onEnd = () => {
+        isDragging = false;
+      };
+
+      container.addEventListener('mousedown', (e) => onStart(e.clientX, e.clientY));
+      window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onEnd);
+
+      container.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        onStart(touch.clientX, touch.clientY);
+      }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        onMove(touch.clientX, touch.clientY);
+      }, { passive: false });
+      window.addEventListener('touchend', onEnd);
+
+      rotate();
+    })();
+    </script>
+  {{- end -}}
+{{- end -}}

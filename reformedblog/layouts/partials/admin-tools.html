@@ -1,0 +1,292 @@
+{{ if .File }}
+<div id="admin-tools-config" data-file-path="{{ .File.Path }}"></div>
+<div id="admin-keyword-popup" class="fixed hidden z-[100] bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2 transform transition-all duration-200 scale-95 opacity-0">
+    <button id="admin-add-keyword-btn" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Add Keyword
+    </button>
+</div>
+
+<div id="admin-toast" class="fixed bottom-6 right-6 z-[100] transform transition-all duration-300 translate-y-20 opacity-0">
+    <div class="bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+        <div id="admin-toast-icon" class="text-green-400">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <span id="admin-toast-message" class="text-sm font-medium">Message</span>
+    </div>
+</div>
+
+  <script>
+    window.AdminAuth = (function() {
+        let _credentials = null; // Store as object {username, password}
+        let _pendingRequest = null;
+
+        // Try to load from localStorage
+        try {
+            const saved = localStorage.getItem('admin_credentials');
+            if (saved) {
+                _credentials = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.error('Failed to load credentials', e);
+        }
+
+        const modalHtml = `
+            <div id="admin-auth-modal" class="fixed inset-0 z-[101] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-80 transform transition-all scale-100">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Admin Login</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                            <input type="text" id="admin-auth-user" class="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" id="admin-auth-pass" class="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div id="admin-auth-error" class="text-red-500 text-xs hidden"></div>
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button id="admin-auth-cancel" class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800">Cancel</button>
+                            <button id="admin-auth-submit" class="px-3 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700">Login</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Inject modal
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = document.getElementById('admin-auth-modal');
+        const userInput = document.getElementById('admin-auth-user');
+        const passInput = document.getElementById('admin-auth-pass');
+        const errorMsg = document.getElementById('admin-auth-error');
+
+        function showModal(resolve, reject) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            userInput.focus();
+            _pendingRequest = { resolve, reject };
+        }
+
+        function hideModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            userInput.value = '';
+            passInput.value = '';
+            errorMsg.classList.add('hidden');
+            errorMsg.textContent = '';
+        }
+
+        document.getElementById('admin-auth-cancel').onclick = function() {
+            if (_pendingRequest) _pendingRequest.reject('User cancelled login');
+            hideModal();
+        };
+
+        document.getElementById('admin-auth-submit').onclick = function() {
+            const user = userInput.value;
+            const pass = passInput.value;
+            if (!user || !pass) {
+                errorMsg.textContent = 'Please enter both username and password';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+            _credentials = { username: user, password: pass };
+            // We assume credentials are correct for now and let the pending request verify them
+            // Or we could do a dummy verification request here if we had a dedicated auth endpoint
+            if (_pendingRequest) _pendingRequest.resolve(_credentials);
+            hideModal();
+        };
+
+        return {
+            authenticatedFetch: async function(url, options = {}) {
+                // Returns a promise
+                const makeRequest = async (creds) => {
+                    const headers = options.headers || {};
+                    const authString = btoa(`${creds.username}:${creds.password}`);
+                    headers['Authorization'] = `Basic ${authString}`;
+
+                    const response = await fetch(url, { ...options, headers });
+
+                    if (response.status === 401) {
+                         // Invalid credentials
+                         _credentials = null; // Clear bad creds
+                         localStorage.removeItem('admin_credentials');
+                         throw new Error('Unauthorized');
+                    }
+
+                    // If success, ensure they are saved (since we might have just logged in)
+                    if (creds) {
+                        localStorage.setItem('admin_credentials', JSON.stringify(creds));
+                    }
+
+                    return response;
+                };
+
+                // If we already have creds, try them
+                if (_credentials) {
+                    try {
+                        return await makeRequest(_credentials);
+                    } catch (e) {
+                        if (e.message !== 'Unauthorized') throw e;
+                        // Fallthrough to prompt if unauthorized
+                    }
+                }
+
+                // Prompt for creds
+                return new Promise((resolve, reject) => {
+                    showModal(
+                        (creds) => {
+                            // On success login
+                            makeRequest(creds).then(resolve).catch(reject);
+                        },
+                        (err) => {
+                            reject(err);
+                        }
+                    );
+                });
+            }
+        };
+    })();
+
+    (function() {
+    const config = document.getElementById('admin-tools-config');
+    if (!config) return;
+
+    const filePath = config.dataset.filePath;
+    console.log("Admin Tools: Current file path =", filePath);
+    const popup = document.getElementById('admin-keyword-popup');
+    const addBtn = document.getElementById('admin-add-keyword-btn');
+    const toast = document.getElementById('admin-toast');
+    const toastMessage = document.getElementById('admin-toast-message');
+    const API_URL = `http://${window.location.hostname}:3000/api/v1/keywords`;
+
+    let selectedText = '';
+    let selectionRange = null;
+
+    // Show toast function
+    function showToast(message, type = 'success') {
+        const icon = document.getElementById('admin-toast-icon');
+        toastMessage.textContent = message;
+
+        if (type === 'success') {
+            icon.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+            icon.className = 'text-green-400';
+        } else {
+            icon.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+            icon.className = 'text-red-400';
+        }
+
+        toast.classList.remove('translate-y-20', 'opacity-0');
+
+        setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 3000);
+    }
+
+    // Handle text selection
+    document.addEventListener('mouseup', function(e) {
+        if (popup.contains(e.target) || e.target.closest('#admin-auth-modal')) return;
+
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+
+        if (text && text.length > 0 && text.length < 50) {
+            // Check if selection is inside an existing highlighted keyword
+            // anchorNode is the text node where selection starts
+            if (selection.anchorNode && selection.anchorNode.parentElement &&
+                selection.anchorNode.parentElement.classList.contains('keyword-highlight')) {
+                return;
+            }
+
+            selectedText = text;
+            selectionRange = selection.getRangeAt(0);
+
+            // Calculate position
+            const rect = selectionRange.getBoundingClientRect();
+            // Position popup just above the selection using viewport coordinates (fixed positioning)
+            // rect.top is relative to viewport, so we don't add scrollTop for fixed elements
+            const top = rect.top - 40;
+            const left = rect.left + (rect.width / 2) - (popup.offsetWidth / 2);
+
+            popup.style.top = `${top}px`;
+            popup.style.left = `${left}px`;
+
+            popup.classList.remove('hidden');
+            setTimeout(() => {
+                popup.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+
+        } else {
+            // Hide popup
+            if (!popup.classList.contains('hidden') && !e.target.closest('#admin-keyword-popup')) {
+                popup.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    popup.classList.add('hidden');
+                }, 200);
+            }
+        }
+    });
+
+    // Handle Add Button Click
+    addBtn.addEventListener('click', async function() {
+        if (!selectedText) return;
+
+        const originalText = addBtn.innerHTML;
+        addBtn.innerHTML = '<div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Adding...';
+        addBtn.disabled = true;
+
+        try {
+            // Use authenticatedFetch instead of fetch
+            const response = await window.AdminAuth.authenticatedFetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // No need for x-api-key here as we use basic auth now, or we can keep it if needed fallback
+                },
+                body: JSON.stringify({
+                    filePath: filePath,
+                    keyword: selectedText
+                })
+            });
+
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(`Added keyword: "${selectedText}"`);
+                    // Close popup
+                    popup.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        popup.classList.add('hidden');
+                    }, 200);
+                    // Clear selection
+                    window.getSelection().removeAllRanges();
+                } else {
+                    showToast(data.error || 'Failed to add keyword', 'error');
+                }
+            } else {
+                const text = await response.text();
+                console.error('API Returned Non-JSON response:', response.status, text);
+                showToast('Server error: Non-JSON response', 'error');
+            }
+
+        } catch (error) {
+            console.error('Error adding keyword:', error);
+            if (error === 'User cancelled login') {
+                // Do nothing
+            } else {
+                showToast(error.message || 'Connection error', 'error');
+            }
+        } finally {
+            addBtn.innerHTML = originalText;
+            addBtn.disabled = false;
+        }
+    });
+})();
+</script>
+{{ end }}

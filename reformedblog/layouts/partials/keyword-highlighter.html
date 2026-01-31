@@ -1,0 +1,204 @@
+{{ if .Params.tags }}
+<style>
+  .keyword-highlight {
+    background-color: rgba(139, 92, 246, 0.15); /* Purple-ish background */
+    color: #7c3aed; /* Purple text */
+    border-bottom: 2px solid rgba(139, 92, 246, 0.4);
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .dark .keyword-highlight {
+    background-color: rgba(139, 92, 246, 0.25);
+    color: #c4b5fd;
+    border-bottom-color: rgba(139, 92, 246, 0.6);
+  }
+
+  .keyword-highlight:hover {
+    background-color: rgba(139, 92, 246, 0.25);
+    border-bottom-color: #7c3aed;
+  }
+
+  .dark .keyword-highlight:hover {
+    background-color: rgba(139, 92, 246, 0.35);
+    border-bottom-color: #a78bfa;
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const tags = {{ .Params.tags | jsonify | safeJS }};
+  if (!tags || tags.length === 0) return;
+
+  const contentDiv = document.querySelector('.content');
+  if (!contentDiv) return;
+
+  // Sort tags by length descending to handle overlapping phrases correctly
+  tags.sort((a, b) => b.length - a.length);
+
+  // Escape regex characters
+  function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // Create a complex regex to match all tags
+  // We use word boundaries \b for English, but for Chinese/CJK we don't want strict word boundaries
+  // So we'll use a more permissive approach: match the exact phrase.
+  // To avoid matching text inside existing tags (like attributes), we operate on text nodes.
+
+  const walker = document.createTreeWalker(
+    contentDiv,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    // Skip if parent is already highlighted or script/style
+    if (node.parentElement.classList.contains('keyword-highlight') ||
+        ['SCRIPT', 'STYLE', 'TEXTAREA', 'PRE', 'CODE'].includes(node.parentElement.tagName)) {
+      continue;
+    }
+    // Optimization: check if node text contains any of the tags roughly
+    if (node.nodeValue.trim()) {
+        textNodes.push(node);
+    }
+  }
+
+  // Process text nodes
+  textNodes.forEach(textNode => {
+    let text = textNode.nodeValue;
+
+    // Construct master Regex
+    const patterns = tags.map(k => escapeRegExp(k)).join('|');
+    const regex = new RegExp(`(${patterns})`, 'gi'); // Case insensitive
+
+    if (!regex.test(text)) return;
+
+    // Reset path
+    regex.lastIndex = 0;
+
+    const div = document.createElement('div');
+    // Sanitize text just in case
+    const escapeHTML = (str) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+    const newHtml = escapeHTML(text).replace(regex, (match) => {
+        return `<span class="keyword-highlight">${match}</span>`;
+    });
+
+    div.innerHTML = newHtml;
+
+    // Replace textNode with new nodes
+    const parent = textNode.parentNode;
+    while (div.firstChild) {
+        parent.insertBefore(div.firstChild, textNode);
+    }
+    parent.removeChild(textNode);
+  });
+
+  // --- Add Delete Popup Logic ---
+  const deletePopupHtml = `
+  <div id="admin-delete-tag-popup" class="fixed hidden z-[100] bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2 transform transition-all duration-200 scale-95 opacity-0">
+      <button id="admin-delete-tag-btn" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Delete Tag
+      </button>
+  </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', deletePopupHtml);
+
+  const deletePopup = document.getElementById('admin-delete-tag-popup');
+  const deleteBtn = document.getElementById('admin-delete-tag-btn');
+  let tagToDelete = null;
+
+  document.querySelectorAll('.keyword-highlight').forEach(el => {
+    el.addEventListener('dblclick', function(e) {
+      // Prevent selecting text on double click
+      e.preventDefault();
+      window.getSelection().removeAllRanges();
+
+      tagToDelete = this.innerText;
+
+      // Position popup
+      const rect = this.getBoundingClientRect();
+      const top = rect.top - 45;
+      const left = rect.left + (rect.width / 2) - (deletePopup.offsetWidth / 2);
+
+      deletePopup.style.top = `${top}px`;
+      deletePopup.style.left = `${left}px`;
+
+      deletePopup.classList.remove('hidden');
+      setTimeout(() => {
+          deletePopup.classList.remove('scale-95', 'opacity-0');
+      }, 10);
+
+      // Stop propagation so document click doesn't hide it immediately
+      e.stopPropagation();
+    });
+  });
+
+  // Hide popup on click outside
+  document.addEventListener('click', function(e) {
+      if (!deletePopup.contains(e.target) && !e.target.classList.contains('keyword-highlight')) {
+             if (!deletePopup.classList.contains('hidden')) {
+                deletePopup.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    deletePopup.classList.add('hidden');
+                }, 200);
+            }
+      }
+  });
+
+  // Handle Delete
+  deleteBtn.addEventListener('click', async function() {
+      if (!tagToDelete) return;
+
+      const adminConfig = document.getElementById('admin-tools-config');
+      if (!adminConfig || !window.AdminAuth) {
+           alert("Admin tools not loaded or auth not available.");
+           return;
+      }
+      const filePath = adminConfig.dataset.filePath;
+      // Use the tags API endpoint
+      const API_URL = `http://${window.location.hostname}:3000/api/v1/tags`;
+
+      const originalText = deleteBtn.innerHTML;
+      deleteBtn.innerHTML = '<div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Deleting...';
+      deleteBtn.disabled = true;
+
+      try {
+           const response = await window.AdminAuth.authenticatedFetch(API_URL, {
+                 method: 'DELETE',
+                 headers: {
+                     'Content-Type': 'application/json'
+                 },
+                 body: JSON.stringify({
+                     filePath: filePath,
+                     tag: tagToDelete
+                 })
+           });
+
+           if (response.ok) {
+               // Reload to reflect changes
+               window.location.reload();
+           } else {
+               const data = await response.json();
+               alert(data.error || "Failed to delete tag");
+           }
+      } catch (err) {
+          console.error("Error deleting tag:", err);
+          alert("Error: " + err.message);
+      } finally {
+          deleteBtn.innerHTML = originalText;
+          deleteBtn.disabled = false;
+      }
+  });
+});
+</script>
+{{ end }}

@@ -1,0 +1,78 @@
+### AUDIOBOOKSHELF WITH CADDY REVERSE PROXY ###
+# This setup provides easy HTTPS with automatic certificate management
+
+services:
+  # Caddy reverse proxy - handles HTTPS automatically
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      # HTTP - redirects to HTTPS
+      - "80:80"
+      # HTTPS - main access point
+      - "443:443"
+      # HTTPS/UDP for HTTP/3 (optional, for modern browsers)
+      - "443:443/udp"
+    environment:
+      # Set your domain here. Use 'localhost' for local development
+      # For production, use your actual domain like 'audiobooks.example.com'
+      - DOMAIN=localhost
+    volumes:
+      # Caddyfile configuration
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Persistent storage for certificates
+      - caddy_data:/data
+      - caddy_config:/config
+      # Logs directory
+      - caddy_logs:/var/log/caddy
+    networks:
+      - audiobookshelf-net
+    depends_on:
+      audiobookshelf:
+        condition: service_healthy
+
+  audiobookshelf:
+    image: my-audiobookshelf:latest
+    # No external ports needed - Caddy handles all external traffic
+    expose:
+      - "80"
+    volumes:
+      # These volumes are needed to keep your library persistent
+      # and allow media to be accessed by the ABS server.
+      # The path to the left of the colon is the path on your computer,
+      # and the path to the right of the colon is where the data is
+      # available to ABS in Docker.
+      # You can change these media directories or add as many as you want
+      - ./audiobooks:/audiobooks
+      - ./podcasts:/podcasts
+      # The metadata directory can be stored anywhere on your computer
+      - ./metadata:/metadata
+      # The config directory needs to be on the same physical machine
+      # you are running ABS on
+      - ./config:/config
+    restart: unless-stopped
+    networks:
+      - audiobookshelf-net
+    # Health check to ensure the service is ready before Caddy proxies to it
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/listenfaithfully/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # You can use the following user directive to run the ABS
+    # docker container as a specific user. You will need to change
+    # the UID and GID to the correct values for your user.
+    # user: 1000:1000
+
+networks:
+  audiobookshelf-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+    # Stores TLS certificates - important to persist!
+  caddy_config:
+    # Caddy configuration state
+  caddy_logs:
+    # Access logs

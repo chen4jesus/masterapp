@@ -1,0 +1,33 @@
+# =============================================================================
+# Listen Faithfully - LOCAL DEVELOPMENT Docker Compose
+# =============================================================================
+# For Windows/localhost development
+# Run: docker compose -f docker-compose.local.yml up -d
+# =============================================================================
+
+services:
+  listenfaithfully-audiobookshelf:
+    image: my-audiobookshelf:latest
+    container_name: listenfaithfully-audiobookshelf
+    restart: unless-stopped
+    volumes:
+      - ./audiobooks:/audiobooks
+      - ./podcasts:/podcasts
+      - ./metadata:/metadata
+      - ./config:/config
+    expose:
+      - "80"
+    networks:
+      - faithconnect
+    healthcheck:
+      # LOCAL: Use simple healthcheck without path prefix
+      test: ["CMD", "curl", "-f", "http://localhost:80/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# Connect to the shared network created by the infrastructure
+networks:
+  faithconnect:
+    external: true

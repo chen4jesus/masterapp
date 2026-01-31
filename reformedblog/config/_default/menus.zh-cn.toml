@@ -1,0 +1,52 @@
+############# 中文导航 ##############
+
+# main menu
+[[main]]
+name = "首页"
+url = "/"
+weight = 1
+
+[[main]]
+name = "全部文章"
+url = "/blog"
+weight = 2
+
+[[main]]
+name = "分类"
+url = "/categories"
+weight = 3
+
+[[main]]
+name = "标签"
+url = "/tags"
+weight = 4
+
+[[main]]
+weight = 5
+name = "其他页面"
+
+[[main]]
+parent = "其他页面"
+name = "作者"
+url = "/authors"
+
+[[main]]
+parent = "其他页面"
+name = "高级组件"
+url = "/advanced-features"
+
+# footer menu
+[[footer]]
+name = "FaithfulReader"
+url = "https://faithfulreader.org"
+weight = 1
+
+#[[footer]]
+#name = "组件"
+#url = "/elements"
+#weight = 2
+
+#[[footer]]
+#name = "隐私政策"
+#url = "/privacy-policy"
+#weight = 3

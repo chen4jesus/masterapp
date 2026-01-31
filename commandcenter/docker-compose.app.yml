@@ -1,0 +1,39 @@
+# =============================================================================
+# Command Center - Standalone Docker Compose
+# =============================================================================
+# Connect to the shared faithconnect network
+# Can be started/stopped independently: docker compose -f docker-compose.app.yml up -d
+# =============================================================================
+
+services:
+  commandcenter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: commandcenter
+    restart: unless-stopped
+    volumes:
+      - ./services.yaml:/app/services.yaml
+    expose:
+      - "3001"   # Express API server
+      - "5173"   # Vite preview server
+    networks:
+      - faithconnect
+
+  bookstack-sync:
+    build:
+      context: ./services/bookstack-syncservice
+      dockerfile: Dockerfile
+    container_name: cc-bookstack-sync
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    expose:
+      - "8080"
+    networks:
+      - faithconnect
+
+# Connect to the shared network created by the infrastructure
+networks:
+  faithconnect:
+    external: true

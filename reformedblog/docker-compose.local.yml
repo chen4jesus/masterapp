@@ -1,0 +1,37 @@
+# =============================================================================
+# Reformed Blog - LOCAL DEVELOPMENT Docker Compose
+# =============================================================================
+# For Windows/localhost development
+# Run: docker compose -f docker-compose.local.yml up -d
+# =============================================================================
+
+services:
+  reformed-blog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: reformed-blog:latest
+    container_name: reformed-blog
+    restart: unless-stopped
+    environment:
+      - TZ=America/New_York
+      - API_KEY=${BLOG_API_KEY:-development-api-key}
+      - PORT=3000
+      # LOCAL: Development mode
+      - NODE_ENV=development
+    volumes:
+      - ./content/chinese/blog:/app/content/chinese/blog
+      - ./assets/images:/app/assets/images
+    expose:
+      - "80"
+    networks:
+      - faithconnect
+    labels:
+      - "com.reformed-blog.description=Reformed Theology Blog"
+      - "com.reformed-blog.managed-by=docker-compose"
+      - "com.reformed-blog.environment=local"
+
+# Connect to the shared network created by the infrastructure
+networks:
+  faithconnect:
+    external: true

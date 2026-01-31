@@ -1,0 +1,603 @@
+Subject: [PATCH] Eddie - guest user
+---
+Index: client/pages/config/authentication.vue
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/client/pages/config/authentication.vue b/client/pages/config/authentication.vue
+--- a/client/pages/config/authentication.vue	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/client/pages/config/authentication.vue	(date 1765333360922)
+@@ -21,6 +21,12 @@
+       </div>
+       <div class="w-full border border-white/10 rounded-xl p-4 my-4 bg-primary/25">
+         <div class="flex items-center">
++          <ui-checkbox v-model="enableGuestAccess" checkbox-bg="bg" />
++          <p class="text-lg pl-4">{{ $strings.HeaderGuestAccess }}</p>
++        </div>
++      </div>
++      <div class="w-full border border-white/10 rounded-xl p-4 my-4 bg-primary/25">
++        <div class="flex items-center">
+           <ui-checkbox v-model="enableOpenIDAuth" checkbox-bg="bg" />
+           <p class="text-lg pl-4">{{ $strings.HeaderOpenIDConnectAuthentication }}</p>
+           <ui-tooltip :text="$strings.LabelClickForMoreInfo" class="inline-flex ml-2">
+@@ -153,6 +159,7 @@
+   data() {
+     return {
+       enableLocalAuth: false,
++      enableGuestAccess: false,
+       enableOpenIDAuth: false,
+       showCustomLoginMessage: false,
+       savingSettings: false,
+@@ -323,8 +330,8 @@
+       return isValid
+     },
+     async saveSettings() {
+-      if (!this.enableLocalAuth && !this.enableOpenIDAuth) {
+-        this.$toast.error('Must have at least one authentication method enabled')
++      if (!this.enableLocalAuth && !this.enableOpenIDAuth && !this.enableGuestAccess) {
++        this.$toast.error('Must have at least one Admin authentication method enabled (Password or OpenID)')
+         return
+       }
+ 
+@@ -339,6 +346,7 @@
+       this.newAuthSettings.authActiveAuthMethods = []
+       if (this.enableLocalAuth) this.newAuthSettings.authActiveAuthMethods.push('local')
+       if (this.enableOpenIDAuth) this.newAuthSettings.authActiveAuthMethods.push('openid')
++      this.newAuthSettings.authGuestAccess = this.enableGuestAccess
+ 
+       this.savingSettings = true
+       this.$axios
+@@ -365,6 +373,7 @@
+         authOpenIDSubfolderForRedirectURLs: this.authSettings.authOpenIDSubfolderForRedirectURLs === undefined ? this.$config.routerBasePath : this.authSettings.authOpenIDSubfolderForRedirectURLs
+       }
+       this.enableLocalAuth = this.authMethods.includes('local')
++      this.enableGuestAccess = !!this.authSettings.authGuestAccess
+       this.enableOpenIDAuth = this.authMethods.includes('openid')
+       this.showCustomLoginMessage = !!this.authSettings.authLoginCustomMessage
+     }
+Index: server/managers/PlaybackSessionManager.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/managers/PlaybackSessionManager.js b/server/managers/PlaybackSessionManager.js
+--- a/server/managers/PlaybackSessionManager.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/managers/PlaybackSessionManager.js	(date 1765333967024)
+@@ -56,6 +56,14 @@
+     const deviceInfo = new DeviceInfo()
+     deviceInfo.setData(ip, ua, clientDeviceInfo, serverVersion, req.user?.id)
+ 
++    // Do not persist device for guest users
++    if (req.user?.isGuest) {
++      if (clientDeviceInfo?.deviceId) {
++        deviceInfo.id = clientDeviceInfo.deviceId
++      }
++      return deviceInfo
++    }
++
+     if (clientDeviceInfo?.deviceId) {
+       const existingDevice = await Database.deviceModel.getOldDeviceByDeviceId(clientDeviceInfo.deviceId)
+       if (existingDevice) {
+@@ -432,6 +440,9 @@
+ 
+   saveSession(session) {
+     if (!session.timeListening) return // Do not save a session with no listening time
++    if (session.userId.startsWith('guest')) {
++      return Promise.resolve()
++    }
+ 
+     if (session.lastSave) {
+       return Database.updatePlaybackSession(session)
+Index: client/pages/login.vue
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/client/pages/login.vue b/client/pages/login.vue
+--- a/client/pages/login.vue	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/client/pages/login.vue	(date 1765333036413)
+@@ -60,12 +60,13 @@
+             </div>
+           </form>
+ 
+-          <div v-if="login_local && login_openid" class="w-full h-px bg-white/10 my-4" />
++          <div v-if="login_local && (login_openid || login_guest)" class="w-full h-px bg-white/10 my-4" />
+ 
+-          <div class="w-full flex py-3">
++          <div class="w-full flex flex-col py-3 gap-3">
+             <a v-if="login_openid" :href="openidAuthUri" class="w-full abs-btn outline-hidden rounded-md shadow-md relative border border-gray-600 text-center bg-primary text-white px-8 py-2 leading-none">
+               {{ openIDButtonText }}
+             </a>
++            <button v-if="login_guest" @click="submitGuest" class="w-full abs-btn outline-hidden rounded-md shadow-md relative border border-gray-600 text-center bg-primary text-white px-8 py-2 leading-none">{{ $strings.ButtonContinueAsGuest }}</button>
+           </div>
+         </div>
+       </div>
+@@ -139,6 +140,9 @@
+     },
+     loginCustomMessage() {
+       return this.authFormData?.authLoginCustomMessage || null
++    },
++    login_guest() {
++      return this.authFormData?.authGuestAccess || false
+     }
+   },
+   methods: {
+@@ -215,6 +219,23 @@
+         else this.error = 'Unknown Error'
+         return false
+       })
++
++      if (authRes?.error) {
++        this.error = authRes.error
++      } else if (authRes) {
++        this.setUser(authRes)
++      }
++      this.processing = false
++    },
++    async submitGuest() {
++      this.error = null
++      this.processing = true
++      const authRes = await this.$axios.$post('/login/guest').catch((error) => {
++        console.error('Failed', error.response)
++        if (error.response) this.error = error.response.data
++        else this.error = 'Unknown Error'
++        return false
++      })
+ 
+       if (authRes?.error) {
+         this.error = authRes.error
+Index: server/models/User.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/models/User.js b/server/models/User.js
+--- a/server/models/User.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/models/User.js	(date 1765331693784)
+@@ -210,6 +210,32 @@
+     return this.create(newUser)
+   }
+ 
++  get isGuest() {
++    return this.type === 'guest'
++  }
++
++  /**
++   * Create guest user object
++   * @param {string} [guestId]
++   * @returns {User}
++   */
++  static createGuestUser(guestId = 'guest') {
++    const newUser = {
++      id: guestId,
++      username: 'Guest',
++      type: 'guest',
++      pash: '',
++      email: '',
++      isActive: true,
++      lastSeen: null,
++      createdAt: new Date(),
++      permissions: this.getDefaultPermissionsForUserType('guest'),
++      bookmarks: [],
++      extraData: {}
++    }
++    return this.build(newUser)
++  }
++
+   /**
+    * Finds an existing user by OpenID subject identifier, or by email/username based on server settings
+    * Returns null if no user is found
+@@ -729,6 +755,12 @@
+    * @returns {Promise<{ mediaProgress: import('./MediaProgress'), error: [string], statusCode: [number] }>}
+    */
+   async createUpdateMediaProgressFromPayload(progressPayload) {
++    if (this.isGuest) {
++      return {
++        mediaProgress: null
++      }
++    }
++
+     /** @type {import('./MediaProgress')|null} */
+     let mediaProgress = null
+     let mediaItemId = null
+@@ -845,6 +877,8 @@
+    * @returns {Promise<AudioBookmarkObject>}
+    */
+   async createBookmark(libraryItemId, time, title) {
++    if (this.isGuest) return null
++
+     const existingBookmark = this.findBookmark(libraryItemId, time)
+     if (existingBookmark) {
+       Logger.warn('[User] Create Bookmark already exists for this time')
+@@ -877,6 +911,8 @@
+    * @returns {Promise<AudioBookmarkObject>}
+    */
+   async updateBookmark(libraryItemId, time, title) {
++    if (this.isGuest) return null
++
+     const bookmark = this.findBookmark(libraryItemId, time)
+     if (!bookmark) {
+       Logger.error(`[User] updateBookmark not found`)
+@@ -896,6 +932,8 @@
+    * @returns {Promise<boolean>} - true if bookmark was removed
+    */
+   async removeBookmark(libraryItemId, time) {
++    if (this.isGuest) return false
++
+     if (!this.findBookmark(libraryItemId, time)) {
+       Logger.error(`[User] removeBookmark not found`)
+       return false
+@@ -912,6 +950,8 @@
+    * @returns {Promise<boolean>}
+    */
+   async addSeriesToHideFromContinueListening(seriesId) {
++    if (this.isGuest) return false
++
+     if (!this.extraData) this.extraData = {}
+     const seriesHideFromContinueListening = this.extraData.seriesHideFromContinueListening || []
+     if (seriesHideFromContinueListening.includes(seriesId)) return false
+@@ -928,6 +968,8 @@
+    * @returns {Promise<boolean>}
+    */
+   async removeSeriesFromHideFromContinueListening(seriesId) {
++    if (this.isGuest) return false
++
+     if (!this.extraData) this.extraData = {}
+     let seriesHideFromContinueListening = this.extraData.seriesHideFromContinueListening || []
+     if (!seriesHideFromContinueListening.includes(seriesId)) return false
+Index: server/controllers/MiscController.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/controllers/MiscController.js b/server/controllers/MiscController.js
+--- a/server/controllers/MiscController.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/controllers/MiscController.js	(date 1765331540705)
+@@ -687,6 +687,13 @@
+           Database.serverSettings[key] = uris
+           hasUpdates = true
+         }
++      } else if (key === 'authGuestAccess') {
++        const updatedValue = !!settingsUpdate[key]
++        if (updatedValue !== currentAuthenticationSettings[key]) {
++          Logger.debug(`[MiscController] Updating auth settings key "${key}" from "${currentAuthenticationSettings[key]}" to "${updatedValue}"`)
++          Database.serverSettings[key] = updatedValue
++          hasUpdates = true
++        }
+       } else {
+         const updatedValueType = typeof settingsUpdate[key]
+         if (['authOpenIDAutoLaunch', 'authOpenIDAutoRegister'].includes(key)) {
+Index: server/controllers/SessionController.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/controllers/SessionController.js b/server/controllers/SessionController.js
+--- a/server/controllers/SessionController.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/controllers/SessionController.js	(date 1765333284745)
+@@ -312,7 +312,18 @@
+       return res.sendStatus(500)
+     }
+ 
+-    const user = await Database.userModel.getUserById(playbackSession.userId)
++    let user = null
++    if (playbackSession.userId.startsWith('guest')) {
++      user = { username: 'Guest' }
++    } else {
++      user = await Database.userModel.getUserById(playbackSession.userId)
++    }
++
++    if (!user) {
++      Logger.error(`[SessionController] Unable to find user for session "${req.params.id}"`)
++      return res.sendStatus(500)
++    }
++
+     Logger.debug(`[SessionController] Serving audio track ${audioTrack.index} for session "${req.params.id}" belonging to user "${user.username}"`)
+ 
+     if (global.XAccel) {
+Index: server/auth/TokenManager.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/auth/TokenManager.js b/server/auth/TokenManager.js
+--- a/server/auth/TokenManager.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/auth/TokenManager.js	(date 1765331714591)
+@@ -162,6 +162,15 @@
+     const ipAddress = requestIp.getClientIp(req)
+     const userAgent = req.headers['user-agent']
+     const accessToken = this.generateTempAccessToken(user)
++
++    if (user.id.startsWith('guest')) {
++      return {
++        accessToken,
++        refreshToken: null,
++        session: null
++      }
++    }
++
+     const refreshToken = this.generateRefreshToken(user)
+ 
+     // Calculate expiration time for the refresh token
+@@ -245,6 +254,15 @@
+       }
+ 
+       // load user by id from the jwt token
++      if (jwt_payload.userId.startsWith('guest')) {
++        if (global.ServerSettings && global.ServerSettings.authGuestAccess) {
++          done(null, Database.userModel.createGuestUser(jwt_payload.userId))
++          return
++        }
++        done(null, null)
++        return
++      }
++
+       const user = await Database.userModel.getUserByIdOrOldId(jwt_payload.userId)
+ 
+       if (!user?.isActive) {
+Index: server/objects/settings/ServerSettings.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/objects/settings/ServerSettings.js b/server/objects/settings/ServerSettings.js
+--- a/server/objects/settings/ServerSettings.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/objects/settings/ServerSettings.js	(date 1765331190752)
+@@ -147,6 +147,8 @@
+     this.authOpenIDAdvancedPermsClaim = settings.authOpenIDAdvancedPermsClaim || ''
+     this.authOpenIDSubfolderForRedirectURLs = settings.authOpenIDSubfolderForRedirectURLs
+ 
++    this.authGuestAccess = !!settings.authGuestAccess
++
+     if (!Array.isArray(this.authActiveAuthMethods)) {
+       this.authActiveAuthMethods = ['local']
+     }
+@@ -255,7 +257,8 @@
+       authOpenIDMobileRedirectURIs: this.authOpenIDMobileRedirectURIs, // Do not return to client
+       authOpenIDGroupClaim: this.authOpenIDGroupClaim, // Do not return to client
+       authOpenIDAdvancedPermsClaim: this.authOpenIDAdvancedPermsClaim, // Do not return to client
+-      authOpenIDSubfolderForRedirectURLs: this.authOpenIDSubfolderForRedirectURLs
++      authOpenIDSubfolderForRedirectURLs: this.authOpenIDSubfolderForRedirectURLs,
++      authGuestAccess: this.authGuestAccess
+     }
+   }
+ 
+@@ -302,6 +305,7 @@
+       authOpenIDGroupClaim: this.authOpenIDGroupClaim, // Do not return to client
+       authOpenIDAdvancedPermsClaim: this.authOpenIDAdvancedPermsClaim, // Do not return to client
+       authOpenIDSubfolderForRedirectURLs: this.authOpenIDSubfolderForRedirectURLs,
++      authGuestAccess: this.authGuestAccess,
+ 
+       authOpenIDSamplePermissions: User.getSampleAbsPermissions()
+     }
+@@ -309,7 +313,8 @@
+ 
+   get authFormData() {
+     const clientFormData = {
+-      authLoginCustomMessage: this.authLoginCustomMessage
++      authLoginCustomMessage: this.authLoginCustomMessage,
++      authGuestAccess: this.authGuestAccess
+     }
+     if (this.authActiveAuthMethods.includes('openid')) {
+       clientFormData.authOpenIDButtonText = this.authOpenIDButtonText
+Index: server/Auth.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/Auth.js b/server/Auth.js
+--- a/server/Auth.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/Auth.js	(date 1765331770004)
+@@ -1,4 +1,5 @@
+ const { Request, Response, NextFunction } = require('express')
++const uuidv4 = require('uuid').v4
+ const passport = require('passport')
+ const JwtStrategy = require('passport-jwt').Strategy
+ const ExtractJwt = require('passport-jwt').ExtractJwt
+@@ -59,7 +60,40 @@
+    * @param {NextFunction} next
+    */
+   isAuthenticated(req, res, next) {
+-    return passport.authenticate('jwt', { session: false })(req, res, next)
++    return passport.authenticate('jwt', { session: false }, (err, user, info) => {
++      if (err) {
++        return next(err)
++      }
++
++      if (user) {
++        req.user = user
++        return next()
++      }
++
++      // Check for guest access
++      // Global ServerSettings are loaded
++      if (!user) {
++        // Check if guest access is enabled
++        if (global.ServerSettings.authGuestAccess) {
++          // If no token, or invalid token, create a NEW guest user for this request
++          // Note: This user is transient and not persisted.
++          // Since we don't have a token to identify a specific guest session,
++          // we create a new one. This might reset "sessions" for stateless requests,
++          // but for consistent guest experience, clients should use /login/guest to get a token.
++          // Fallback only:
++          req.user = Database.userModel.createGuestUser(`guest-${uuidv4()}`)
++          return next()
++        }
++      }
++
++      // If we are here, authentication failed and no guest access
++      if (info && info.message === 'No auth token') {
++        return res.status(401).send('Unauthorized')
++      }
++
++      // If token provided but invalid (expired etc), return 401
++      return res.status(401).send(info?.message || 'Unauthorized')
++    })(req, res, next)
+   }
+ 
+   /**
+@@ -321,6 +355,21 @@
+       // Check if mobile app wants refresh token in response
+       const returnTokens = req.headers['x-return-tokens'] === 'true'
+ 
++      const userResponse = await this.handleLoginSuccess(req, res, returnTokens)
++      res.json(userResponse)
++    })
++
++    // Guest login route
++    router.post('/login/guest', this.authRateLimiter, async (req, res) => {
++      if (!global.ServerSettings.authGuestAccess) {
++        return res.sendStatus(403)
++      }
++
++      const guestId = `guest-${uuidv4()}`
++      const user = Database.userModel.createGuestUser(guestId)
++      req.user = user
++
++      const returnTokens = req.headers['x-return-tokens'] === 'true'
+       const userResponse = await this.handleLoginSuccess(req, res, returnTokens)
+       res.json(userResponse)
+     })
+Index: client/strings/zh-tw.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/client/strings/zh-tw.json b/client/strings/zh-tw.json
+--- a/client/strings/zh-tw.json	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/client/strings/zh-tw.json	(date 1765332613530)
+@@ -22,6 +22,7 @@
+   "ButtonCloseSession": "關閉開放會話",
+   "ButtonCollections": "收藏",
+   "ButtonConfigureScanner": "配置掃描",
++  "ButtonContinueAsGuest": "訪客訪問",
+   "ButtonCreate": "創建",
+   "ButtonCreateBackup": "創建備份",
+   "ButtonDelete": "刪除",
+@@ -126,6 +127,7 @@
+   "HeaderEreaderSettings": "Ereader 設定",
+   "HeaderFiles": "檔案",
+   "HeaderFindChapters": "查找章節",
++  "HeaderGuestAccess": "訪客訪問",
+   "HeaderIgnoredFiles": "忽略的檔案",
+   "HeaderItemFiles": "項目檔案",
+   "HeaderItemMetadataUtils": "項目元數據管理",
+Index: server/SocketAuthority.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/SocketAuthority.js b/server/SocketAuthority.js
+--- a/server/SocketAuthority.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/SocketAuthority.js	(date 1765332346984)
+@@ -258,8 +258,18 @@
+       return socket.emit('auth_failed', { message: 'Invalid token' })
+     }
+ 
+-    // get the user via the id from the decoded jwt.
+-    const user = await Database.userModel.getUserByIdOrOldId(token_data.userId)
++    let user = null
++    if (token_data.userId.startsWith('guest')) {
++      if (!global.ServerSettings.authGuestAccess) {
++        Logger.error('Cannot validate socket - guest access disabled')
++        return socket.emit('auth_failed', { message: 'Guest access disabled' })
++      }
++      user = Database.userModel.createGuestUser(token_data.userId)
++    } else {
++      // get the user via the id from the decoded jwt.
++      user = await Database.userModel.getUserByIdOrOldId(token_data.userId)
++    }
++
+     if (!user) {
+       // user not found
+       Logger.error('Cannot validate socket - invalid token')
+@@ -293,7 +303,9 @@
+ 
+     // Update user lastSeen without firing sequelize bulk update hooks
+     user.lastSeen = Date.now()
+-    await user.save({ hooks: false })
++    if (!user.isGuest) {
++      await user.save({ hooks: false })
++    }
+ 
+     const initialPayload = {
+       userId: client.user.id,
+Index: server/controllers/PlaylistController.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/server/controllers/PlaylistController.js b/server/controllers/PlaylistController.js
+--- a/server/controllers/PlaylistController.js	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/server/controllers/PlaylistController.js	(date 1765333694292)
+@@ -26,6 +26,10 @@
+    * @param {Response} res
+    */
+   async create(req, res) {
++    if (req.user.isGuest) {
++      Logger.warn(`[PlaylistController] Guest user "${req.user.username}" attempted to create a playlist`)
++      return res.status(403).send('Guest users cannot create playlists. Please log in to create a playlist.')
++    }
+     const reqBody = req.body || {}
+ 
+     // Validation
+@@ -498,6 +502,10 @@
+    * @param {Response} res
+    */
+   async createFromCollection(req, res) {
++    if (req.user.isGuest) {
++      Logger.warn(`[PlaylistController] Guest user "${req.user.username}" attempted to create a playlist from collection`)
++      return res.status(403).send('Guest users cannot create playlists. Please log in to create a playlist.')
++    }
+     const collection = await Database.collectionModel.findByPk(req.params.collectionId)
+     if (!collection) {
+       return res.status(404).send('Collection not found')
+Index: client/strings/en-us.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/client/strings/en-us.json b/client/strings/en-us.json
+--- a/client/strings/en-us.json	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/client/strings/en-us.json	(date 1765332575704)
+@@ -26,6 +26,7 @@
+   "ButtonCloseSession": "Close Open Session",
+   "ButtonCollections": "Collections",
+   "ButtonConfigureScanner": "Configure Scanner",
++  "ButtonContinueAsGuest": "Continue as Guest",
+   "ButtonCreate": "Create",
+   "ButtonCreateBackup": "Create Backup",
+   "ButtonDelete": "Delete",
+@@ -147,6 +148,7 @@
+   "HeaderEreaderSettings": "Ereader Settings",
+   "HeaderFiles": "Files",
+   "HeaderFindChapters": "Find Chapters",
++  "HeaderGuestAccess": "Guest Access",
+   "HeaderIgnoredFiles": "Ignored Files",
+   "HeaderItemFiles": "Item Files",
+   "HeaderItemMetadataUtils": "Item Metadata Utils",
+Index: client/strings/zh-cn.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/client/strings/zh-cn.json b/client/strings/zh-cn.json
+--- a/client/strings/zh-cn.json	(revision b05848b9ec397d7b7208c8461f1254a151d4ce83)
++++ b/client/strings/zh-cn.json	(date 1765332600695)
+@@ -26,6 +26,7 @@
+   "ButtonCloseSession": "关闭活动会话",
+   "ButtonCollections": "收藏",
+   "ButtonConfigureScanner": "配置扫描",
++  "ButtonContinueAsGuest": "访客访问",
+   "ButtonCreate": "创建",
+   "ButtonCreateBackup": "创建备份",
+   "ButtonDelete": "删除",
+@@ -147,6 +148,7 @@
+   "HeaderEreaderSettings": "电子阅读器设置",
+   "HeaderFiles": "文件",
+   "HeaderFindChapters": "查找章节",
++  "HeaderGuestAccess": "访客访问",
+   "HeaderIgnoredFiles": "忽略的文件",
+   "HeaderItemFiles": "项目文件",
+   "HeaderItemMetadataUtils": "项目元数据管理",

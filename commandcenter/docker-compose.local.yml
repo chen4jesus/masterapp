@@ -1,0 +1,42 @@
+# =============================================================================
+# Command Center - LOCAL DEVELOPMENT Docker Compose
+# =============================================================================
+# For Windows/localhost development
+# Run: docker compose -f docker-compose.local.yml up -d
+# =============================================================================
+
+services:
+  commandcenter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: commandcenter
+    restart: unless-stopped
+    environment:
+      # LOCAL: Add any local-specific env vars here
+      - NODE_ENV=development
+    volumes:
+      - ./services.yaml:/app/services.yaml
+    expose:
+      - "3001"   # Express API server
+      - "5173"   # Vite preview server
+    networks:
+      - faithconnect
+
+  bookstack-sync:
+    build:
+      context: ./services/bookstack-syncservice
+      dockerfile: Dockerfile
+    container_name: cc-bookstack-sync
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    ports:
+      - "8082:8080"
+    networks:
+      - faithconnect
+
+# Connect to the shared network created by the infrastructure
+networks:
+  faithconnect:
+    external: true

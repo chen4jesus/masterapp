@@ -1,0 +1,265 @@
+@use "mixins";
+@use "vars";
+
+// Bilingual content styles for side-by-side Chinese/English display
+.bilingual-container {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    @include mixins.lightDark(background-color, #fafafa, #2a2a2a);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.bilingual-header {
+    display: flex;
+    border-bottom: 2px solid;
+    @include mixins.lightDark(border-color, #e0e0e0, #444);
+    font-weight: 500;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    @include mixins.lightDark(color, #666, #aaa);
+
+    .bilingual-header-zh,
+    .bilingual-header-en {
+        flex: 1;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .bilingual-header-zh {
+        border-right: 1px solid;
+        @include mixins.lightDark(border-color, #e0e0e0, #444);
+    }
+}
+
+.bilingual-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.bilingual-row {
+    display: flex;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    border-bottom: 1px solid;
+    @include mixins.lightDark(border-color, #eee, #3a3a3a);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        @include mixins.lightDark(background-color, rgba(245, 180, 90, 0.05), rgba(245, 180, 90, 0.05));
+    }
+
+    &.highlighted {
+        @include mixins.lightDark(background-color, rgba(245, 180, 90, 0.15), rgba(245, 180, 90, 0.2));
+        
+        .bilingual-zh {
+            border-left: 4px solid #e8a850;
+            padding-left: calc(1.25rem - 4px);
+        }
+    }
+}
+
+.bilingual-cell {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    line-height: 1.7;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+
+    &.bilingual-zh {
+        border-right: 1px solid;
+        @include mixins.lightDark(border-color, #e0e0e0, #444);
+        @include mixins.lightDark(color, #333, #e0e0e0);
+        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    }
+
+    &.bilingual-en {
+        @include mixins.lightDark(color, #555, #bbb);
+        font-family: "Georgia", "Times New Roman", serif;
+    }
+}
+
+.bilingual-paragraph {
+    margin: 0;
+    word-wrap: break-word;
+}
+
+// Responsive design for smaller screens
+@include mixins.smaller-than(vars.$bp-m) {
+    .bilingual-container {
+        border-radius: 4px;
+    }
+
+    .bilingual-header {
+        font-size: 0.75rem;
+        
+        .bilingual-header-zh,
+        .bilingual-header-en {
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    .bilingual-row {
+        flex-direction: column;
+
+        &.highlighted .bilingual-zh {
+            border-left: 4px solid #e8a850;
+            padding-left: calc(0.75rem - 4px);
+        }
+
+        &.highlighted .bilingual-en {
+            border-left: 4px solid transparent;
+            @include mixins.lightDark(background-color, rgba(245, 180, 90, 0.08), rgba(245, 180, 90, 0.1));
+        }
+    }
+
+    .bilingual-cell {
+        padding: 0.75rem;
+
+        &.bilingual-zh {
+            border-right: none;
+            border-bottom: 1px dashed;
+            @include mixins.lightDark(border-color, #e0e0e0, #444);
+        }
+    }
+}
+
+// Print styles
+@media print {
+    .bilingual-container {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+    .bilingual-row {
+        break-inside: avoid;
+    }
+
+    .bilingual-row.highlighted {
+        background-color: #fff9e6 !important;
+    }
+}
+
+// ============================================
+// WYSIWYG Editor Bilingual Styles
+// ============================================
+
+.bilingual-editor-container {
+    width: 100%;
+    margin: 1rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid;
+    @include mixins.lightDark(border-color, #d0d0d0, #555);
+    @include mixins.lightDark(background-color, #fafafa, #2a2a2a);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    &:focus-within {
+        @include mixins.lightDark(border-color, #e8a850, #e8a850);
+        box-shadow: 0 0 0 3px rgba(232, 168, 80, 0.2);
+    }
+}
+
+.bilingual-editor-header {
+    display: flex;
+    border-bottom: 2px solid;
+    @include mixins.lightDark(border-color, #e0e0e0, #444);
+    @include mixins.lightDark(background-color, #f0f0f0, #333);
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    @include mixins.lightDark(color, #666, #aaa);
+    user-select: none;
+
+    .bilingual-editor-header-zh,
+    .bilingual-editor-header-en {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        text-align: center;
+    }
+
+    .bilingual-editor-header-zh {
+        border-right: 1px solid;
+        @include mixins.lightDark(border-color, #e0e0e0, #444);
+        @include mixins.lightDark(background-color, rgba(232, 168, 80, 0.1), rgba(232, 168, 80, 0.15));
+    }
+
+    .bilingual-editor-header-en {
+        @include mixins.lightDark(background-color, rgba(100, 149, 237, 0.1), rgba(100, 149, 237, 0.15));
+    }
+}
+
+.bilingual-editor-content {
+    display: flex;
+    min-height: 150px;
+}
+
+.bilingual-editor-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    &.bilingual-editor-zh {
+        border-right: 1px solid;
+        @include mixins.lightDark(border-color, #e0e0e0, #444);
+    }
+}
+
+.bilingual-editor-textarea {
+    flex: 1;
+    width: 100%;
+    padding: 1rem;
+    min-height: 150px;
+    border: none;
+    outline: none;
+    resize: vertical;
+    line-height: 1.8;
+    font-size: 1rem;
+    @include mixins.lightDark(background-color, #fff, #2a2a2a);
+
+    &:focus {
+        @include mixins.lightDark(background-color, #fffef5, #2f2f2f);
+    }
+
+    .bilingual-editor-zh & {
+        @include mixins.lightDark(color, #333, #e0e0e0);
+        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    }
+
+    .bilingual-editor-en & {
+        @include mixins.lightDark(color, #555, #bbb);
+        font-family: "Georgia", "Times New Roman", serif;
+    }
+
+    &::placeholder {
+        color: #999;
+        font-style: italic;
+    }
+}
+
+// Responsive editor styles
+@include mixins.smaller-than(vars.$bp-m) {
+    .bilingual-editor-content {
+        flex-direction: column;
+    }
+
+    .bilingual-editor-column.bilingual-editor-zh {
+        border-right: none;
+        border-bottom: 1px solid;
+        @include mixins.lightDark(border-color, #e0e0e0, #444);
+    }
+
+    .bilingual-editor-header {
+        .bilingual-editor-header-zh,
+        .bilingual-editor-header-en {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.7rem;
+        }
+    }
+}
+

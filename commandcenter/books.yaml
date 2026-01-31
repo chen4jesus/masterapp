@@ -1,0 +1,121 @@
+'2':
+  book: knowing-god
+  author: J.I. Packer
+  categories:
+    - book
+  tags:
+    - reformed
+    - god
+'3':
+  book: WCF-walkthrough
+  author: opc
+  categories:
+    - WCF
+    - book
+  tags:
+    - confession
+    - opc
+'4':
+  book: wcf-intro
+  author: wcf
+  categories:
+    - book
+  tags:
+    - reformed
+    - catechism
+    - larger catechism
+'5':
+  book: to-parents
+  author: aw pink
+  categories:
+    - article
+  tags:
+    - reformed
+    - parenting
+'6':
+  author: FC
+  categories:
+    - Book
+  tags:
+    - reformed
+    - puritan
+  book: family-worship
+'8':
+  book: song-shang-jie
+  author: unknown
+  categories:
+    - book
+  tags:
+    - songshangjie
+    - history
+    - christian
+'10':
+  book: sinners-in-the-hands-of-god
+  author: jonathan edwards
+  categories:
+    - sermon
+  tags:
+    - sinner
+    - sin
+    - god
+'14':
+  book: temptation-sin
+  author: john owen
+  categories:
+    - book
+  tags:
+    - john owen
+    - sin
+    - temptation
+    - reformed
+'15':
+  book: demo-book
+  author: demo-author
+  categories:
+    - book
+  tags:
+    - god
+    - christ
+'16':
+  book: gospel-astray
+  author: john owen
+  categories:
+    - book
+  tags:
+    - reformed
+    - gospel
+    - john owen
+'17':
+  book: screwtape
+  author: cs.lewis
+  categories:
+    - book
+  tags:
+    - fiction
+    - christianity
+'20':
+  book: spiritual-examples
+  author: unknown
+  categories:
+    - book
+  tags:
+    - christian history
+    - spiritual example
+    - history
+'22':
+  book: mere-christianity
+  author: cs lewis
+  categories:
+    - book
+    - reformation
+  tags:
+    - god
+    - christianity
+'28':
+  book: wsc-vincent
+  author: T. Vincent
+  categories:
+    - catechism
+  tags:
+    - catechism
+    - shorter catechism

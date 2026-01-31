@@ -1,0 +1,230 @@
+{{ define "main" }}
+
+  <div class="container relative">
+    {{ .Content }}
+
+    <!-- Scroll Down Indicator (Mouse + Arrow) -->
+    <div id="scroll-down-indicator" class="scroll-down-indicator cursor-pointer">
+      <div class="mouse">
+        <div class="wheel"></div>
+      </div>
+      <div class="arrow">
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const indicator = document.getElementById('scroll-down-indicator');
+    if (indicator) {
+      indicator.addEventListener('click', function() {
+        const target = document.getElementById('latest-articles');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
+
+    window.addEventListener('scroll', function() {
+      const indicator = document.getElementById('scroll-down-indicator');
+      if (!indicator) return;
+      if (window.scrollY > 100) {
+        indicator.style.opacity = '0';
+        indicator.style.transition = 'opacity 0.4s ease';
+        indicator.style.pointerEvents = 'none';
+      } else {
+        indicator.style.opacity = '1';
+        indicator.style.pointerEvents = 'auto';
+      }
+    });
+  </script>
+
+  <style>
+    .scroll-down-indicator {
+      position: absolute;
+      bottom: -2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      transition: opacity 0.4s ease, transform 0.3s ease;
+    }
+    .scroll-down-indicator:hover {
+      transform: translateX(-50%) translateY(-5px);
+    }
+
+    .mouse {
+      width: 26px;
+      height: 42px;
+      border: 2px solid var(--color-primary, #7f0ec6);
+      border-radius: 20px;
+      display: flex;
+      justify-content: center;
+      opacity: 0.6;
+    }
+    .wheel {
+      width: 3px;
+      height: 6px;
+      background-color: var(--color-primary, #7f0ec6);
+      border-radius: 2px;
+      margin-top: 6px;
+      animation: mouse-scroll 1.6s cubic-bezier(0.15, 0.41, 0.69, 0.94) infinite;
+    }
+    @keyframes mouse-scroll {
+      0% { opacity: 0; transform: translateY(-3px); }
+      20% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(12px); }
+    }
+
+    .arrow {
+      font-size: 1rem;
+      color: var(--color-primary, #7f0ec6);
+      opacity: 0.5;
+      animation: arrow-bounce 2s infinite;
+    }
+    @keyframes arrow-bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+      60% { transform: translateY(-3px); }
+    }
+
+    /* Dark Mode Styles */
+    .dark .mouse {
+      border-color: #ffffff;
+      opacity: 0.8;
+    }
+    .dark .wheel {
+      background-color: #ffffff;
+    }
+    .dark .arrow {
+      color: #ffffff;
+      opacity: 0.7;
+    }
+  </style>
+
+    <!-- Highlight of Articles -->
+  {{ with .Params.articles }}
+    {{ if .enable }}
+      <section id="latest-articles" class="section">
+        <div class="container">
+          <div class="row items-end justify-between mb-12">
+            <div class="md:col-8 text-center md:text-left">
+              <h2 class="mb-4">{{ .title | markdownify }}</h2>
+            </div>
+            <div class="md:col-4 text-center md:text-right">
+              <a href="{{ `blog` | relLangURL }}" class="btn btn-outline-primary">{{ T "view_all_posts" | default "View All Posts" }}</a>
+            </div>
+          </div>
+          <!-- Swiper Slider -->
+          <!-- Carousel Wrapper to handle positioning arrows outside the clipping mask -->
+          <div class="relative">
+            <!-- Custom Navigation (Visible on PC) - Positioned relative to this wrapper -->
+            <div class="swiper-button-prev-custom hidden lg:flex absolute top-1/2 -left-4 xl:-left-10 z-10 -translate-y-1/2 cursor-pointer w-12 h-12 rounded-full bg-white dark:bg-darkmode-light border border-border/50 dark:border-darkmode-border/50 items-center justify-center shadow-lg hover:bg-primary hover:text-white dark:hover:bg-primary dark:text-white transition-all duration-300 group">
+              <i class="fa-solid fa-chevron-left text-lg group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="swiper-button-next-custom hidden lg:flex absolute top-1/2 -right-4 xl:-right-10 z-10 -translate-y-1/2 cursor-pointer w-12 h-12 rounded-full bg-white dark:bg-darkmode-light border border-border/50 dark:border-darkmode-border/50 items-center justify-center shadow-lg hover:bg-primary hover:text-white dark:hover:bg-primary dark:text-white transition-all duration-300 group">
+              <i class="fa-solid fa-chevron-right text-lg group-hover:scale-110 transition-transform"></i>
+            </div>
+
+            <!-- Swiper Slider (Masked) -->
+            <div class="swiper latest-articles-slider overflow-hidden py-10 -my-10 px-1">
+              <div class="swiper-wrapper !h-auto">
+                {{ range first 9 (where (where site.RegularPages "Section" "blog") "Language.Lang" "zh-cn") }}
+                  <!-- Enforce fixed height for consistency -->
+                  <div class="swiper-slide !h-auto !flex">
+                    <div class="w-full h-full flex flex-col pb-12">
+                       {{ partial "components/blog-card" . }}
+                    </div>
+                  </div>
+                {{ end }}
+              </div>
+
+              <!-- Pagination (Bars on Mobile, Dots on Desktop) -->
+              <div class="swiper-pagination !absolute !bottom-4 !left-0 !w-full flex justify-center lg:gap-3 gap-1 px-4 lg:px-0 z-10"></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    {{ end }}
+  {{ end }}
+  <!-- /Highlight of Articles -->
+
+  <style>
+    /* Pagination Styles */
+    .latest-articles-slider .swiper-pagination-bullet {
+      background-color: var(--color-border, #e5e7eb) !important;
+      opacity: 0.5;
+      margin: 0 !important;
+      transition: all 0.3s ease;
+      display: block;
+    }
+    .latest-articles-slider .swiper-pagination-bullet-active {
+      background-color: #000000 !important;
+      opacity: 1;
+    }
+    .dark .latest-articles-slider .swiper-pagination-bullet {
+      background-color: rgba(255,255,255,0.2) !important;
+    }
+    .dark .latest-articles-slider .swiper-pagination-bullet-active {
+      background-color: #ffffff !important;
+    }
+
+    /* Mobile: Segmented Bars */
+    @media (max-width: 1023px) {
+      .latest-articles-slider .swiper-pagination-bullet {
+        width: auto;
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+      }
+    }
+
+    /* Desktop: Dots */
+    @media (min-width: 1024px) {
+      .latest-articles-slider .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex: none; /* Prevent flexing */
+      }
+      .latest-articles-slider .swiper-pagination-bullet-active {
+        transform: scale(1.2);
+      }
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      new Swiper('.latest-articles-slider', {
+        slidesPerView: 1,
+        spaceBetween: 16,
+        loop: false,
+        grabCursor: true,
+        navigation: {
+          nextEl: '.swiper-button-next-custom',
+          prevEl: '.swiper-button-prev-custom',
+        },
+        pagination: {
+          el: '.swiper-pagination',
+          type: 'bullets',
+          clickable: true,
+        },
+        breakpoints: {
+          640: {
+            slidesPerView: 2,
+            spaceBetween: 16,
+          },
+          1024: {
+            slidesPerView: 4,
+            spaceBetween: 16,
+          }
+        }
+      });
+    });
+  </script>
+
+{{ end }}

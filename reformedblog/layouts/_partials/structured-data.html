@@ -1,0 +1,86 @@
+{{/* Enhanced Structured Data for SEO - Matches WordPress plugin capabilities */}}
+
+{{/* Article/BlogPosting Schema */}}
+{{ if .IsPage }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "{{ if .Params.type }}{{ .Params.type }}{{ else }}BlogPosting{{ end }}",
+  "headline": {{ .Title | jsonify }},
+  "datePublished": {{ .PublishDate.Format "2006-01-02T15:04:05Z07:00" | jsonify }},
+  "dateModified": {{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" | jsonify }},
+  "author": {
+    "@type": "Person",
+    "name": {{ .Params.author | default "ReformedReader" | jsonify }}
+  },
+  "description": {{ (or .Description .Summary) | plainify | jsonify }},
+  "url": {{ .Permalink | jsonify }},
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": {{ .Permalink | jsonify }}
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": {{ site.Title | jsonify }},
+    "url": {{ site.BaseURL | jsonify }}
+  }{{ with .Params.image }},
+  "image": {
+    "@type": "ImageObject",
+    "url": {{ . | absURL | jsonify }}
+  }{{ end }}{{ with .Params.tags }},
+  "keywords": {{ . | jsonify }}{{ end }}
+}
+</script>
+{{ end }}
+
+{{/* BreadcrumbList Schema */}}
+{{ if ne .Kind "home" }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {{ $url := .Permalink }}
+    {{ $title := .Title }}
+    {{ $items := slice }}
+    {{/* Home */}}
+    {{ $items = $items | append (dict "item" site.BaseURL "name" site.Title "position" 1) }}
+    {{/* Section */}}
+    {{ if .Section }}
+      {{ $items = $items | append (dict "item" (printf "%s%s/" site.BaseURL .Section) "name" .Section "position" 2) }}
+    {{ end }}
+    {{/* Current page */}}
+    {{ $pos := len $items | add 1 }}
+    {{ $items = $items | append (dict "item" $url "name" $title "position" $pos) }}
+    {{ range $i, $item := $items }}
+    {
+      "@type": "ListItem",
+      "position": {{ $item.position }},
+      "name": {{ $item.name | jsonify }},
+      "item": {{ $item.item | jsonify }}
+    }{{ if lt $i (sub (len $items) 1) }},{{ end }}
+    {{ end }}
+  ]
+}
+</script>
+{{ end }}
+
+{{/* WebSite Schema for Home */}}
+{{ if .IsHome }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": {{ site.Title | jsonify }},
+  "url": {{ site.BaseURL | jsonify }},
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": {{ (printf "%ssearch?q={search_term_string}" site.BaseURL) | jsonify }}
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+{{ end }}
