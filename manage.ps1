@@ -91,8 +91,15 @@ function Start-Infra {
     Write-Info "Starting infrastructure (Caddy + network)..."
     Push-Location $ScriptDir
     
-    if ($Local) {
-        docker compose -f docker-compose.local.yml up -d
+    $composeFile = "docker-compose.yml"
+    if ($Local -or (Test-Path "docker-compose.local.yml")) {
+        $composeFile = "docker-compose.local.yml"
+        Write-Info "Using local infrastructure configuration (docker-compose.local.yml)"
+    }
+
+    docker compose -f $composeFile up -d
+    
+    if ($composeFile -eq "docker-compose.local.yml") {
         Write-Success "Local infrastructure started!"
         Write-Host ""
         Write-Host "Access your apps at:" -ForegroundColor Cyan
@@ -103,7 +110,6 @@ function Start-Infra {
         Write-Host "  Reformed Blog:     http://localhost:8004"
     }
     else {
-        docker compose up -d
         Write-Success "Infrastructure started!"
         Write-Info "Caddy is now running at ports 80/443"
     }
@@ -117,12 +123,12 @@ function Stop-Infra {
     Write-Warning "Stopping infrastructure..."
     Push-Location $ScriptDir
     
-    if ($Local) {
-        docker compose -f docker-compose.local.yml down
+    $composeFile = "docker-compose.yml"
+    if ($Local -or (Test-Path "docker-compose.local.yml")) {
+        $composeFile = "docker-compose.local.yml"
     }
-    else {
-        docker compose down
-    }
+
+    docker compose -f $composeFile down
     
     Write-Success "Infrastructure stopped"
     Pop-Location
@@ -150,14 +156,15 @@ function Start-App {
         Write-Info "Using local configuration (docker-compose.local.yml)"
     }
     
-    $envArg = ""
     $rootEnv = Join-Path $ScriptDir ".env"
     if (Test-Path $rootEnv) {
-        $envArg = "--env-file $rootEnv"
         Write-Info "Loading root .env file"
+        docker compose --env-file "$rootEnv" -f $composeFile up -d --build
     }
-    
-    docker compose $envArg -f $composeFile up -d --build
+    else {
+        docker compose -f $composeFile up -d --build
+    }
+
     Pop-Location
     Write-Success "$AppName started!"
 }
@@ -175,13 +182,14 @@ function Stop-App {
         $composeFile = "docker-compose.local.yml"
     }
 
-    $envArg = ""
     $rootEnv = Join-Path $ScriptDir ".env"
     if (Test-Path $rootEnv) {
-        $envArg = "--env-file $rootEnv"
+        docker compose --env-file "$rootEnv" -f $composeFile down
+    }
+    else {
+        docker compose -f $composeFile down
     }
 
-    docker compose $envArg -f $composeFile down
     Pop-Location
     Write-Success "$AppName stopped"
 }
