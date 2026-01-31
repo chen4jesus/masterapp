@@ -120,6 +120,12 @@ start_app() {
     
     print_info "Starting $app..."
     cd "$app_dir"
+
+    # Build custom image for listenfaithfully if needed
+    if [[ "$app" == "listenfaithfully" ]]; then
+        print_info "Building custom image: my-audiobookshelf..."
+        docker build -t my-audiobookshelf .
+    fi
     
     local compose_file=$(get_compose_file)
     print_info "Using configuration: $compose_file"

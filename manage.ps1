@@ -149,6 +149,12 @@ function Start-App {
     
     Write-Info "Starting $AppName..."
     Push-Location $appDir
+
+    # Build custom image for listenfaithfully if needed
+    if ($AppName -eq "listenfaithfully") {
+        Write-Info "Building custom image: my-audiobookshelf..."
+        docker build -t my-audiobookshelf .
+    }
     
     $composeFile = "docker-compose.app.yml"
     if (Test-Path "docker-compose.local.yml") {
