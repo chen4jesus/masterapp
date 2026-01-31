@@ -1,0 +1,122 @@
+{{ define "main" }}
+  {{ partial "page-header" . }}
+
+
+  <section class="section-sm">
+    <div class="container">
+      <div class="row justify-center">
+        <div class="lg:col-8 xl:col-6">
+          <!-- Contact Info Cards -->
+          <div class="space-y-6">
+            <!-- Email Card -->
+            <div class="rounded-xl border border-border p-6 bg-theme-light dark:bg-darkmode-theme-light">
+              <div class="flex items-center gap-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-dark dark:text-white mb-1">电子邮件</h3>
+                  <a href="mailto:faithconnect2020@gmail.com" class="text-primary hover:underline">faithconnect2020@gmail.com</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Social Links Card -->
+            <div class="rounded-xl border border-border p-6 bg-theme-light dark:bg-darkmode-theme-light">
+              <h3 class="text-lg font-semibold text-dark dark:text-white mb-4">关注我们</h3>
+              <div class="flex flex-wrap gap-4">
+                {{ with site.Params.social }}
+                  {{ range . }}
+                    <a href="{{ .link }}" target="_blank" rel="noopener noreferrer"
+                       class="flex items-center gap-2 px-4 py-2 rounded-lg bg-body dark:bg-darkmode-body hover:bg-primary/10 transition-colors">
+                      <i class="{{ .icon }} text-primary"></i>
+                      <span class="text-dark dark:text-white">{{ .name }}</span>
+                    </a>
+                  {{ end }}
+                {{ end }}
+              </div>
+            </div>
+
+            <!-- Message Note -->
+            <div class="text-center text-text dark:text-darkmode-text py-4">
+              <p>感谢您的关注与支持！如有任何问题，请通过以上方式联系我们。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- google map -->
+  {{ with site.Params.google_map }}
+    {{ if .enable }}
+      <div
+        id="map"
+        style="height: 400px;"
+        data-latitude="{{ .map_latitude }}"
+        data-longitude="{{ .map_longitude }}"
+        data-marker="{{ .map_marker | relURL }}"
+        data-marker-name="{{ site.Title }}"></div>
+    {{ end }}
+  {{ end }}
+
+  {{ with site.Params.subscription }}
+    {{ if .enable }}
+      <!-- subscription form -->
+      <form
+        action="{{ .mailchimp_form_action | safeURL }}"
+        method="post"
+        id="mc-embedded-subscribe-form"
+        novalidate="novalidate">
+        <div class="input-group w-75 mx-auto mb-3">
+          <input
+            type="email"
+            name="EMAIL"
+            placeholder="Email"
+            class="form-control required email mce_inline_error"
+            id="mce-EMAIL"
+            aria-required="true"
+            autocomplete="off"
+            required />
+          <button
+            class="input-group-text"
+            name="subscribe"
+            id="mc-embedded-subscribe">
+            {{ .button_label }}
+          </button>
+        </div>
+        <input
+          type="hidden"
+          name="EMAILTYPE"
+          id="mce-EMAILTYPE-0"
+          value="html" />
+        <div style="position:absolute;left:-5000px" aria-hidden="true">
+          <input type="text" name="{{ .name }}" tabindex="-1" />
+        </div>
+      </form>
+      <div id="mce-responses" class="clear">
+        <div
+          class="response text-white"
+          id="mce-error-response"
+          style="display:none"></div>
+        <div
+          class="response text-white"
+          id="mce-success-response"
+          style="display:none"></div>
+      </div>
+      <script
+        type="text/javascript"
+        src="//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js"></script>
+      <!-- /subscription form -->
+    {{ end }}
+  {{ end }}
+
+  {{ if site.Params.google_map.enable }}
+    {{ $gmap:= resources.Get "plugins/maps/google-map.js" }}
+    <script defer src="{{ $gmap.RelPermalink }}"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ site.Params.google_map.map_api_key }}&libraries=places"></script>
+  {{ end }}
+
+{{ end }}

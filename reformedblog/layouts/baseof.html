@@ -1,0 +1,88 @@
+<!doctype html>
+<html
+  itemscope
+  class="{{- if not site.Params.theme_switcher -}}
+    {{- site.Params.theme_default -}}
+  {{- end -}}"
+  lang="{{ site.LanguageCode | default `en-US` }}"
+  itemtype="http://schema.org/WebPage">
+  <head>
+    <!-- head (don't cache it) -->
+    {{ partial "essentials/head.html" . }}
+
+    <!-- canonical URL -->
+    {{ partial "canonical.html" . }}
+
+    <!-- structured data for SEO -->
+    {{ partial "structured-data.html" . }}
+
+
+    <!-- style (always cache it) -->
+    {{ partialCached "essentials/style.html" . }}
+
+  </head>
+
+  <body>
+    <!-- cache partial only in production -->
+    {{ if hugo.IsProduction }}
+      {{ partialCached "preloader.html" . }}
+      {{ partialCached "gtm-noscript.html" . }}
+    {{ else }}
+      {{ partial "preloader.html" . }}
+
+
+      <!-- tailwind size indicator -->
+      <!-- {{ partial "components/tw-size-indicator.html" . }} -->
+    {{ end }}
+
+
+    <!-- announcement -->
+    {{ partialCached "announcement.html" . }}
+
+
+    <!-- header (don't cache it) -->
+    {{ partial "essentials/header.html" . }}
+    {{ partial "search-modal.html" (dict "Context" . ) }}
+    {{ partial "contact-modal.html" . }}
+    {{ partial "search-highlighter.html" . }}
+
+
+    <main>
+      {{ block "main" . }}{{ end }}
+    </main>
+
+    <!-- footer -->
+    {{ partial "essentials/footer.html" . }}
+
+    <!-- Back to Top -->
+    <button
+      id="back-to-top"
+      aria-label="Back to Top"
+      style="bottom: 20px !important; width: 40px !important; height: 40px !important;"
+      class="fixed right-8 z-50 flex items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all duration-300 opacity-0 pointer-events-none hover:bg-primary/90 dark:bg-darkmode-primary dark:text-dark">
+      <i class="fa-solid fa-chevron-up"></i>
+    </button>
+
+    <style>
+      #back-to-top.show {
+        opacity: 0.8;
+        pointer-events: auto;
+      }
+      #back-to-top.idle {
+        opacity: 0.3;
+      }
+      #back-to-top.show:hover {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    </style>
+
+    <!-- script (always cache it) -->
+    {{ partialCached "essentials/script.html" . }}
+
+    <!-- Knowledge Graph Sidebar -->
+    {{ if and site.Params.knowledge_graph.enable (eq .Type "blog") .IsPage (not .IsHome) .Params.tags }}
+      {{ partial "knowledge-graph.html" . }}
+    {{ end }}
+  </body>
+</html>

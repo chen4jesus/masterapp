@@ -1,0 +1,147 @@
+# =============================================================================
+# LOCAL DEVELOPMENT Caddyfile for localhost
+# =============================================================================
+
+{
+    admin off
+}
+
+# Snippets
+(common_headers) {
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+}
+
+(standard_log) {
+    log {
+        output file /var/log/caddy/local.log {
+            roll_size 10MB
+            roll_keep 3
+        }
+        format json
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Dashboard - localhost:80
+# -----------------------------------------------------------------------------
+:80 {
+    import common_headers
+    import standard_log dashboard
+
+    root * /var/www/dashboard
+    rewrite * /index.local.html
+    file_server
+}
+
+# -----------------------------------------------------------------------------
+# 1. Command Center - localhost:8001
+# -----------------------------------------------------------------------------
+:8001 {
+    import common_headers
+    import standard_log
+
+    # BookStack Sync Service
+    handle /api/sync/* {
+        reverse_proxy cc-bookstack-sync:8080 {
+            fail_duration 10s
+        }
+    }
+    handle /api/books* {
+        reverse_proxy cc-bookstack-sync:8080 {
+            fail_duration 10s
+        }
+    }
+    handle /api/debug* {
+        reverse_proxy cc-bookstack-sync:8080 {
+            fail_duration 10s
+        }
+    }
+
+    # API
+    handle /api/* {
+        reverse_proxy commandcenter:3001 {
+            fail_duration 10s
+        }
+    }
+
+    # Vite
+    handle {
+        reverse_proxy commandcenter:5173 {
+            fail_duration 10s
+        }
+    }
+
+    handle_errors {
+        @502-503 expression {err.status_code} in [502, 503]
+        handle @502-503 {
+            respond "🎛️ Command Center is starting..." 503
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# 2. Read Faithfully - localhost:8002
+# -----------------------------------------------------------------------------
+:8002 {
+    import common_headers
+    import standard_log
+
+    reverse_proxy bookstack-app:80 {
+        fail_duration 10s
+        lb_try_duration 2s
+    }
+
+    handle_errors {
+        @502-503 expression {err.status_code} in [502, 503]
+        handle @502-503 {
+            respond "📚 Read Faithfully is starting..." 503
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# 3. Listen Faithfully - localhost:8003
+# -----------------------------------------------------------------------------
+:8003 {
+    import common_headers
+    import standard_log
+
+    reverse_proxy listenfaithfully-audiobookshelf:80 {
+        header_up Host localhost
+        header_up X-Real-IP {remote_host}
+        flush_interval -1
+        fail_duration 10s
+    }
+
+    handle_errors {
+        @502-503 expression {err.status_code} in [502, 503]
+        handle @502-503 {
+            respond "🎧 Listen Faithfully is starting..." 503
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# 4. Reformed Blog - localhost:8004
+# -----------------------------------------------------------------------------
+:8004 {
+    import common_headers
+    import standard_log
+
+    reverse_proxy reformed-blog:80 {
+        fail_duration 10s
+        lb_try_duration 2s
+    }
+
+    handle_errors {
+        @502-503 expression {err.status_code} in [502, 503]
+        handle @502-503 {
+            respond "📖 Reformed Blog is starting..." 503
+        }
+    }
+}

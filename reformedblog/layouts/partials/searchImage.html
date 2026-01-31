@@ -1,0 +1,20 @@
+{{- $src := .Src -}}
+{{- $size := .Size -}}
+{{- $command := .Command -}}
+{{- $result := $src -}}
+
+{{- if (findRE `^https?://` $src) -}}
+  {{- $result = $src -}}
+{{- else -}}
+  {{- $image := resources.Get $src -}}
+  {{- if $image -}}
+    {{- if eq $command "Resize" -}}
+      {{- $image = ($image.Resize $size) -}}
+    {{- else if eq $command "Fill" -}}
+      {{- $image = ($image.Fill $size) -}}
+    {{- end -}}
+    {{- $result = $image.RelPermalink -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $result -}}

@@ -1,0 +1,24 @@
+# Hugo
+public/
+resources/
+_vendor/
+.hugo_build.lock
+hugo_stats.json
+
+# Node
+node_modules/
+npm-debug.log
+
+# Build & Temp
+.dist/
+.tmp/
+.lock/
+.sass-cache/
+builds/
+
+# OS/System
+.DS_Store
+Thumbs.db
+
+# Frontend Config
+jsconfig.json

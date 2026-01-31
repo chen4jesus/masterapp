@@ -1,0 +1,16 @@
+{{/*
+  Knowledge Graph Shortcode
+
+  Usage in content files: {{< knowledge-graph >}}
+
+  Displays a floating button that opens a modal with an interactive knowledge graph.
+  The graph shows the current page's keywords as diamond nodes and related blog posts
+  as circle nodes, with first-level connections only.
+
+  Requirements:
+  - The page must have 'keywords' defined in its frontmatter
+
+  This shortcode reuses the implementation partial for consistency.
+*/}}
+
+{{ partial "knowledge-graph-impl.html" .Page }}

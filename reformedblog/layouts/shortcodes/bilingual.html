@@ -1,0 +1,384 @@
+{{/*
+  Bilingual Block Shortcode - Vertically Aligned Version
+  Uses the site's theme colors for light/dark mode
+
+  Automatically detects tag order:
+  - If [en] comes first: English on left, Chinese on right
+  - If [zh] comes first: Chinese on left, English on right
+
+  Usage:
+  {{< bilingual >}}
+  [zh]
+  中文段落 1
+
+  中文段落 2
+  [/zh]
+  [en]
+  English paragraph 1
+
+  English paragraph 2
+  [/en]
+  {{< /bilingual >}}
+*/}}
+
+{{ $content := .Inner }}
+{{ $id := printf "bilingual-%d" (now.UnixNano) }}
+
+{{/* Detect which tag comes first by checking what appears before ::en:: vs ::zh:: */}}
+{{ $beforeEn := "" }}
+{{ $beforeZh := "" }}
+{{ $enTag := "::en::" }}
+{{ $zhTag := "::zh::" }}
+
+{{ $enSplit := split $content $enTag }}
+{{ $zhSplit := split $content $zhTag }}
+
+{{ if gt (len $enSplit) 1 }}
+  {{ $beforeEn = index $enSplit 0 }}
+{{ end }}
+{{ if gt (len $zhSplit) 1 }}
+  {{ $beforeZh = index $zhSplit 0 }}
+{{ end }}
+
+{{/* Determine which language is first (left side) - shorter prefix means it comes first */}}
+{{ $zhFirst := lt (len $beforeZh) (len $beforeEn) }}
+
+{{/* Extract Content based on order */}}
+{{ $enContent := "" }}
+{{ $zhContent := "" }}
+
+{{ if $zhFirst }}
+  {{/* Format: ::zh:: content ::en:: content */}}
+  {{ $zhMatch := findRE `(?s)::zh::(.*?)::en::` $content }}
+  {{ if $zhMatch }}
+     {{ $c := index $zhMatch 0 }}
+     {{ $c = replace $c "::zh::" "" }}
+     {{ $c = replace $c "::en::" "" }}
+     {{ $zhContent = $c }}
+  {{ end }}
+
+  {{ $enMatch := findRE `(?s)::en::(.*)` $content }}
+  {{ if $enMatch }}
+     {{ $c := index $enMatch 0 }}
+     {{ $c = replace $c "::en::" "" }}
+     {{ $enContent = $c }}
+  {{ end }}
+{{ else }}
+  {{/* Format: ::en:: content ::zh:: content */}}
+  {{ $enMatch := findRE `(?s)::en::(.*?)::zh::` $content }}
+  {{ if $enMatch }}
+     {{ $c := index $enMatch 0 }}
+     {{ $c = replace $c "::en::" "" }}
+     {{ $c = replace $c "::zh::" "" }}
+     {{ $enContent = $c }}
+  {{ end }}
+
+  {{ $zhMatch := findRE `(?s)::zh::(.*)` $content }}
+  {{ if $zhMatch }}
+     {{ $c := index $zhMatch 0 }}
+     {{ $c = replace $c "::zh::" "" }}
+     {{ $zhContent = $c }}
+  {{ end }}
+{{ end }}
+
+{{/* Split into paragraphs - handle different line endings */}}
+{{ $enContent = replaceRE "\r\n" "\n" $enContent }}
+{{ $zhContent = replaceRE "\r\n" "\n" $zhContent }}
+{{ $enParagraphs := split (trim $enContent "\n\r\t ") "\n\n" }}
+{{ $zhParagraphs := split (trim $zhContent "\n\r\t ") "\n\n" }}
+
+{{/* Filter out empty paragraphs */}}
+{{ $enFiltered := slice }}
+{{ range $enParagraphs }}
+  {{ if ne (trim . "\n\r\t ") "" }}
+    {{ $enFiltered = $enFiltered | append . }}
+  {{ end }}
+{{ end }}
+
+{{ $zhFiltered := slice }}
+{{ range $zhParagraphs }}
+  {{ if ne (trim . "\n\r\t ") "" }}
+    {{ $zhFiltered = $zhFiltered | append . }}
+  {{ end }}
+{{ end }}
+
+{{/* Assign left/right based on order */}}
+{{ $leftParagraphs := $enFiltered }}
+{{ $rightParagraphs := $zhFiltered }}
+{{ $leftLabel := "English" }}
+{{ $rightLabel := "中文" }}
+
+{{ if $zhFirst }}
+  {{ $leftParagraphs = $zhFiltered }}
+  {{ $rightParagraphs = $enFiltered }}
+  {{ $leftLabel = "中文" }}
+  {{ $rightLabel = "English" }}
+{{ end }}
+
+{{/* Determine max count */}}
+{{ $leftCount := len $leftParagraphs }}
+{{ $rightCount := len $rightParagraphs }}
+
+<div class="bilingual-container" id="{{ $id }}">
+  {{/* Header row */}}
+  <div class="bilingual-row bilingual-header-row">
+    <div class="bilingual-cell bilingual-header">{{ $leftLabel }}</div>
+    <div class="bilingual-cell bilingual-header">{{ $rightLabel }}</div>
+  </div>
+
+  {{/* Content rows - iterate using the larger array */}}
+  {{ range $i, $leftPara := $leftParagraphs }}
+    <div class="bilingual-row" data-pair="{{ $i }}">
+      <div class="bilingual-cell bilingual-left">
+        <div class="bilingual-paragraph">
+          {{ $leftPara | markdownify }}
+        </div>
+      </div>
+      <div class="bilingual-cell bilingual-right">
+        <div class="bilingual-paragraph">
+          {{ if lt $i (len $rightParagraphs) }}
+            {{ index $rightParagraphs $i | markdownify }}
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  {{ end }}
+
+  {{/* Handle case where right side has more paragraphs than left */}}
+  {{ if gt $rightCount $leftCount }}
+    {{ range $i, $rightPara := $rightParagraphs }}
+      {{ if ge $i $leftCount }}
+        <div class="bilingual-row" data-pair="{{ $i }}">
+          <div class="bilingual-cell bilingual-left">
+            <div class="bilingual-paragraph"></div>
+          </div>
+          <div class="bilingual-cell bilingual-right">
+            <div class="bilingual-paragraph">
+              {{ $rightPara | markdownify }}
+            </div>
+          </div>
+        </div>
+      {{ end }}
+    {{ end }}
+  {{ end }}
+</div>
+
+<style>
+/*
+ * Bilingual Component Styles
+ * Uses theme CSS variables for consistent light/dark mode
+ */
+
+.bilingual-container {
+  display: flex;
+  flex-direction: column;
+  margin: 2rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-body);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode container */
+.dark .bilingual-container {
+  border-color: var(--color-darkmode-border);
+  background: var(--color-darkmode-body);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.bilingual-row {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.dark .bilingual-row {
+  border-bottom-color: var(--color-darkmode-border);
+}
+
+.bilingual-row:last-child {
+  border-bottom: none;
+}
+
+.bilingual-row:not(.bilingual-header-row):hover {
+  background-color: var(--color-light);
+}
+
+.dark .bilingual-row:not(.bilingual-header-row):hover {
+  background-color: var(--color-darkmode-light);
+}
+
+/* Active row highlight */
+.bilingual-row.active {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(253, 224, 71, 0.15) 100%);
+}
+
+.dark .bilingual-row.active {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(253, 224, 71, 0.1) 100%);
+}
+
+.bilingual-row.active .bilingual-paragraph {
+  border-left-color: #f59e0b;
+}
+
+/* Center dot indicator for active row */
+.bilingual-row:not(.bilingual-header-row)::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: transparent;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.bilingual-row.active::before {
+  background: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+}
+
+.bilingual-cell {
+  flex: 1;
+  padding: 0;
+  min-width: 0;
+}
+
+.bilingual-left {
+  border-right: 1px solid var(--color-border);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 51, 234, 0.03) 100%);
+}
+
+.dark .bilingual-left {
+  border-right-color: var(--color-darkmode-border);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.05) 100%);
+}
+
+.bilingual-right {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, rgba(249, 115, 22, 0.03) 100%);
+}
+
+.dark .bilingual-right {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(249, 115, 22, 0.05) 100%);
+}
+
+/* Header row */
+.bilingual-header-row {
+  cursor: default;
+  background: var(--color-light);
+}
+
+.dark .bilingual-header-row {
+  background: var(--color-darkmode-light);
+}
+
+.bilingual-header-row:hover {
+  background: var(--color-light);
+}
+
+.dark .bilingual-header-row:hover {
+  background: var(--color-darkmode-light);
+}
+
+.bilingual-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-light);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-secondary);
+}
+
+.dark .bilingual-header {
+  color: var(--color-darkmode-text-light);
+}
+
+/* Paragraph styling */
+.bilingual-paragraph {
+  padding: 1rem 1.5rem;
+  border-left: 3px solid transparent;
+  line-height: 1.8;
+  min-height: 100%;
+  transition: border-color 0.3s ease;
+  color: var(--color-text);
+}
+
+.dark .bilingual-paragraph {
+  color: var(--color-darkmode-text);
+}
+
+.bilingual-paragraph p {
+  margin: 0;
+}
+
+.bilingual-paragraph p + p {
+  margin-top: 0.5rem;
+}
+
+/* Strong text in paragraphs */
+.bilingual-paragraph strong,
+.bilingual-paragraph b {
+  color: var(--color-text-dark);
+}
+
+.dark .bilingual-paragraph strong,
+.dark .bilingual-paragraph b {
+  color: var(--color-darkmode-text-dark);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .bilingual-row {
+    flex-direction: column;
+  }
+
+  .bilingual-left {
+    border-right: none;
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .dark .bilingual-left {
+    border-bottom-color: var(--color-darkmode-border);
+  }
+
+  .bilingual-header-row .bilingual-left {
+    border-bottom: none;
+  }
+
+  .bilingual-header-row .bilingual-right {
+    display: none;
+  }
+
+  .bilingual-row::before {
+    display: none;
+  }
+}
+</style>
+
+<script>
+(function() {
+  const container = document.getElementById('{{ $id }}');
+  if (!container) return;
+
+  const rows = container.querySelectorAll('.bilingual-row:not(.bilingual-header-row)');
+
+  rows.forEach(row => {
+    row.addEventListener('click', function() {
+      // Remove active class from all rows
+      rows.forEach(r => r.classList.remove('active'));
+
+      // Add active class to clicked row
+      this.classList.add('active');
+    });
+  });
+})();
+</script>

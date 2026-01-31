@@ -1,0 +1,36 @@
+{{ define "main" }}
+  {{ partial "page-header" . }}
+
+  {{/* Redirect to blog page with filter for consistent experience */}}
+  {{ $termType := .Data.Singular }}
+  {{ $termTitle := .Title }}
+  <script>
+    (function() {
+      const termType = "{{ $termType }}";
+      const termTitle = "{{ $termTitle }}";
+      const blogUrl = "{{ "blog" | relLangURL }}";
+
+      // Build the filter URL
+      let param = termType === "tag" ? "tags" : "cats";
+      const filterUrl = blogUrl + "?" + param + "=" + encodeURIComponent(termTitle);
+
+      // Redirect immediately
+      window.location.replace(filterUrl);
+    })();
+  </script>
+
+  {{/* Fallback content if JS is disabled */}}
+  <noscript>
+    <section class="section">
+      <div class="container">
+        <div class="text-center py-12">
+          <p class="mb-4">正在跳转到筛选页面... Redirecting to filter page...</p>
+          <a href="{{ "blog" | relLangURL }}?{{ if eq .Data.Singular "tag" }}tags{{ else }}cats{{ end }}={{ .Title | urlquery }}" class="btn btn-primary">
+            点击这里 Click here
+          </a>
+        </div>
+      </div>
+    </section>
+  </noscript>
+{{ end }}
+

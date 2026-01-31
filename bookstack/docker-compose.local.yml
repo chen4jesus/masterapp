@@ -1,0 +1,65 @@
+# =============================================================================
+# BookStack - LOCAL DEVELOPMENT Docker Compose
+# =============================================================================
+# For Windows/localhost development
+# Run: docker compose -f docker-compose.local.yml up -d
+# =============================================================================
+
+services:
+  bookstack-db:
+    image: mysql:8.4
+    container_name: bookstack-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: bookstack
+      MYSQL_USER: ${BOOKSTACK_DB_USER:-bookstack}
+      MYSQL_PASSWORD: ${BOOKSTACK_DB_PASSWORD:-bookstack}
+      MYSQL_RANDOM_ROOT_PASSWORD: 'true'
+    volumes:
+      - ./dev/docker/init.db:/docker-entrypoint-initdb.d
+      - bookstack_db:/var/lib/mysql
+    networks:
+      - faithconnect
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bookstack-app:
+    build:
+      context: .
+      dockerfile: ./dev/docker/Dockerfile
+    container_name: bookstack-app
+    restart: unless-stopped
+    environment:
+      # LOCAL: Use localhost:8002 instead of domain
+      APP_URL: http://localhost:8002
+      DB_CONNECTION: mysql
+      DB_HOST: bookstack-db
+      DB_PORT: 3306
+      DB_DATABASE: bookstack
+      DB_USERNAME: ${BOOKSTACK_DB_USER:-bookstack}
+      DB_PASSWORD: ${BOOKSTACK_DB_PASSWORD:-bookstack}
+      MAIL_DRIVER: ${MAIL_DRIVER:-log}
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+    volumes:
+      - .:/app
+    expose:
+      - "80"
+    networks:
+      - faithconnect
+    depends_on:
+      bookstack-db:
+        condition: service_healthy
+    entrypoint: /usr/local/bin/entrypoint.app.sh
+
+# Connect to the shared network created by the infrastructure
+networks:
+  faithconnect:
+    external: true
+
+volumes:
+  bookstack_db:
+    name: faithconnect_bookstack_db

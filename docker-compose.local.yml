@@ -1,0 +1,52 @@
+# =============================================================================
+# LOCAL DEVELOPMENT Infrastructure - Windows/localhost Compatible
+# =============================================================================
+# Use this instead of docker-compose.yml for local development
+# Run: docker compose -f docker-compose.local.yml up -d
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Caddy - Local Development Reverse Proxy
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    container_name: faithconnect-caddy
+    restart: unless-stopped
+    ports:
+      # Dashboard
+      - "80:80"
+      # App ports
+      - "8001:8001"   # Command Center
+      - "8002:8002"   # BookStack
+      - "8003:8003"   # Listen Faithfully
+      - "8004:8004"   # Reformed Blog
+      # Caddy admin API (optional)
+      - "2019:2019"
+    volumes:
+      # Use the LOCAL Caddyfile
+      - ./Caddyfile.local:/etc/caddy/Caddyfile:ro
+      # Dashboard files
+      - ./dashboard:/var/www/dashboard:ro
+      # Persistent storage
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - faithconnect
+
+# =============================================================================
+# Shared Network - All apps connect to this
+# =============================================================================
+networks:
+  faithconnect:
+    driver: bridge
+    name: faithconnect
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  caddy_data:
+    name: faithconnect_caddy_data
+  caddy_config:
+    name: faithconnect_caddy_config

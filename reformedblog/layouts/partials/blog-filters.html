@@ -1,0 +1,95 @@
+{{ $isTerm := eq .Kind "term" }}
+{{ $currentTitle := .Title }}
+
+<div class="blog-filter-container mb-6">
+  <!-- Row 1: Buttons -->
+  <div class="flex flex-wrap items-center gap-2 mx-auto lg:mx-0">
+    <!-- Main Toggle Button -->
+    <button id="filter-toggle-btn" class="group flex items-center gap-2 px-5 py-3 bg-primary/10 dark:bg-primary/25 border border-primary/30 dark:border-primary/40 rounded-xl hover:bg-primary hover:text-white transition-all duration-300 shadow-md hover:shadow-xl">
+      <i class="fa-solid fa-sliders text-primary dark:text-white group-hover:text-white"></i>
+      <span class="font-bold text-black dark:text-white group-hover:text-white">搜索内容</span>
+      <i id="filter-chevron" class="fa-solid fa-chevron-down ml-2 transition-transform duration-300 text-sm text-primary dark:text-white group-hover:text-white"></i>
+    </button>
+
+    <!-- Clear All Button (hidden by default) -->
+    <button id="clear-all-filters-btn" class="hidden items-center gap-1.5 px-4 py-2.5 bg-red-500/10 dark:bg-red-500/25 text-red-700 dark:text-white border border-red-500/20 dark:border-red-400/40 rounded-xl hover:bg-red-500 hover:text-white transition-all duration-300 text-sm font-bold">
+      <i class="fa-solid fa-xmark"></i>
+      清除所有
+    </button>
+
+    <!-- Active Filter Indicator (only shows when a term is selected via Hugo) -->
+    {{ if $isTerm }}
+    <div class="active-filter-badge flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl">
+      <span class="text-sm opacity-60">当前:</span>
+      <span class="font-bold text-primary text-sm">{{ $currentTitle }}</span>
+      <a href="{{ `blog` | relLangURL }}" class="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center hover:scale-110 transition-transform" title="清除">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </a>
+    </div>
+    {{ end }}
+  </div>
+
+  <!-- Row 2: Selected Filters Chips (separate row, better for many items) -->
+  <div id="selected-filters-display" class="hidden mt-3 flex-wrap items-center gap-1.5"></div>
+
+  <!-- Collapsible Panel -->
+  <div id="filter-panel" class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out opacity-0 translate-y-2">
+    <div class="mt-4 p-5 bg-body dark:bg-darkmode-body border border-border/40 dark:border-darkmode-border/40 rounded-2xl shadow-lg">
+      <div class="row gx-5">
+        {{ $widgets := site.Params.widgets.sidebar }}
+        {{ range $widgets }}
+          <div class="lg:col-6 mb-8 lg:mb-0">
+            {{ partial ( print "widgets/" . ) $ }}
+          </div>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #filter-panel.is-open {
+    max-height: 2000px;
+    opacity: 1;
+    transform: translateY(0);
+    margin-bottom: 1.5rem;
+  }
+  #filter-chevron.is-open {
+    transform: rotate(180deg);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Highlight active items in widgets */
+  .bg-light.dark\:bg-darkmode-light.active,
+  .hover\:bg-primary.active {
+    background-color: var(--color-primary, #7f0ec6) !important;
+    color: white !important;
+  }
+  .dark .active-filter-badge {
+    background-color: rgba(127, 14, 198, 0.2);
+    border-color: rgba(127, 14, 198, 0.4);
+  }
+</style>
+
+<script>
+  window.indexURL = "{{ "searchindex.json" | relLangURL }}";
+  (function() {
+    const toggleBtn = document.getElementById('filter-toggle-btn');
+    const panel = document.getElementById('filter-panel');
+    const chevron = document.getElementById('filter-chevron');
+
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener('click', function() {
+        panel.classList.toggle('is-open');
+        chevron.classList.toggle('is-open');
+      });
+    }
+  })();
+</script>

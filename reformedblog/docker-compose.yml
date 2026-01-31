@@ -1,0 +1,28 @@
+services:
+  blog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: reformed-blog:latest
+    container_name: reformed-blog
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ=America/New_York
+      - API_KEY=${API_KEY:-development-api-key}
+      - PORT=3000
+    volumes:
+      # Persist content and images outside container
+      - ./content/chinese/blog:/app/content/chinese/blog
+      - ./assets/images:/app/assets/images
+    networks:
+      - blog-network
+    labels:
+      - "com.reformed-blog.description=Reformed Theology Blog"
+      - "com.reformed-blog.managed-by=docker-compose"
+
+networks:
+  blog-network:
+    driver: bridge

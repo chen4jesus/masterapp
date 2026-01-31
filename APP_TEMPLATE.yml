@@ -1,0 +1,35 @@
+# =============================================================================
+# BOILERPLATE: For Your Next Application
+# =============================================================================
+# Follow these 3 steps to add a new app to faithconnect.us
+# =============================================================================
+
+# 1. Create your application directory (e.g., 'my-new-app')
+# 2. Save this file as 'my-new-app/docker-compose.app.yml'
+# 3. Add the subdomain to the master Caddyfile
+
+services:
+  # Change 'my-app-service' to a unique name
+  my-app-service:
+    build:
+      context: .
+      # dockerfile: Dockerfile # Uncomment if your Dockerfile has a different name
+    container_name: my-app-container # Must be unique!
+    restart: unless-stopped
+
+    # Environment variables specific to your app
+    # environment:
+    #   - DATABASE_URL=...
+
+    # Expose the internal port (do NOT use 'ports', use 'expose')
+    expose:
+      - "8080" # Change to the port your app listens on
+
+    # Connect to the global network
+    networks:
+      - faithconnect
+
+# This part is CRITICAL - it allows the app to talk to the master Caddy
+networks:
+  faithconnect:
+    external: true

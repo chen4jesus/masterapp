@@ -1,0 +1,37 @@
+# =============================================================================
+# Listen Faithfully - Standalone Docker Compose
+# =============================================================================
+# Connect to the shared faithconnect network
+# Can be started/stopped independently: docker compose -f docker-compose.app.yml up -d
+# =============================================================================
+
+services:
+  listenfaithfully-audiobookshelf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-audiobookshelf:latest
+    container_name: listenfaithfully-audiobookshelf
+    restart: unless-stopped
+    environment:
+      - ROUTER_BASE_PATH=/
+    volumes:
+      - ./audiobooks:/audiobooks
+      - ./podcasts:/podcasts
+      - ./metadata:/metadata
+      - ./config:/config
+    expose:
+      - "80"
+    networks:
+      - faithconnect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# Connect to the shared network created by the infrastructure
+networks:
+  faithconnect:
+    external: true

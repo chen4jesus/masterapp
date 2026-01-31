@@ -1,0 +1,130 @@
+<!-- JS Plugins + Main script -->
+{{ $scripts := slice }}
+{{ $scriptsLazy := slice }}
+{{ range site.Params.plugins.js }}
+  {{ if findRE "^http" .link }}
+    <script
+      src="{{ .link | relURL }}"
+      type="application/javascript"
+      {{ .attributes | safeHTMLAttr }}></script>
+  {{ else }}
+    {{ if not .lazy }}
+      {{ $scripts = $scripts | append (resources.Get .link) }}
+    {{ else }}
+      {{ $scriptsLazy = $scriptsLazy | append (resources.Get .link) }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+
+<!-- main script -->
+{{ $scripts = $scripts | append (resources.Get "js/main.js") }}
+{{ $scripts = $scripts | resources.Concat "js/script.js" }}
+
+{{ $scriptsLazy = $scriptsLazy | resources.Concat "js/script-lazy.js" }}
+
+{{ if hugo.IsProduction }}
+  {{ $scripts = $scripts | minify | fingerprint }}
+  {{ $scriptsLazy = $scriptsLazy | minify | fingerprint }}
+{{ end }}
+
+{{/* scripts */}}
+<script
+  crossorigin="anonymous"
+  integrity="{{ $scripts.Data.Integrity }}"
+  src="{{ $scripts.RelPermalink }}"></script>
+
+{{/* scripts lazy */}}
+<script
+  defer
+  async
+  crossorigin="anonymous"
+  integrity="{{ $scriptsLazy.Data.Integrity }}"
+  src="{{ $scriptsLazy.RelPermalink }}"></script>
+
+<!-- progressive web app -->
+{{/* https://github.com/gethugothemes/hugo-modules/tree/master/pwa */}}
+{{ partialCached "pwa.html" . }}
+
+
+<!-- cookie consent -->
+{{/* https://github.com/gethugothemes/hugo-modules/tree/master/components/cookie-consent */}}
+{{ partialCached "cookie-consent.html" . }}
+
+
+<!-- google adsense -->
+{{/* https://github.com/gethugothemes/hugo-modules/tree/master/adsense */}}
+{{ partialCached "adsense-script.html" . }}
+
+
+<!-- announcement -->
+{{/* https://github.com/gethugothemes/hugo-modules/tree/master/components/announcement */}}
+{{ partialCached "announcement-script.html" . }}
+
+<!-- font size adjuster logic -->
+<script>
+  (function () {
+    const increaseBtn = document.getElementById("font-size-increase");
+    const decreaseBtn = document.getElementById("font-size-decrease");
+    const styleTag = document.getElementById("blog-content-font-size-style");
+
+    let currentSize = parseInt(localStorage.getItem("blog-content-font-size")) || 100;
+
+    function upgradeFontSize(delta) {
+      currentSize = Math.max(70, Math.min(200, currentSize + delta));
+      if (styleTag) {
+        styleTag.innerHTML = `.content, .content p, .content li, .mb-6 { font-size: ${currentSize}% !important; }`;
+      }
+      localStorage.setItem("blog-content-font-size", currentSize);
+    }
+
+    if (increaseBtn) {
+      increaseBtn.addEventListener("click", () => upgradeFontSize(10));
+    }
+    if (decreaseBtn) {
+      decreaseBtn.addEventListener("click", () => upgradeFontSize(-10));
+    }
+  })();
+</script>
+<!-- Back to Top Logic -->
+<script>
+  (function () {
+    const backToTop = document.getElementById("back-to-top");
+    if (!backToTop) return;
+
+    let idleTimer;
+    const idleTime = 3000; // 3 seconds
+
+    function resetIdleTimer() {
+      backToTop.classList.remove("idle");
+      clearTimeout(idleTimer);
+      if (backToTop.classList.contains("show")) {
+        idleTimer = setTimeout(() => {
+          backToTop.classList.add("idle");
+        }, idleTime);
+      }
+    }
+
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) {
+        backToTop.classList.add("show");
+        resetIdleTimer();
+      } else {
+        backToTop.classList.remove("show");
+        backToTop.classList.remove("idle");
+        clearTimeout(idleTimer);
+      }
+    });
+
+    // Detect mouse move to wake up the button
+    window.addEventListener("mousemove", resetIdleTimer);
+    window.addEventListener("touchstart", resetIdleTimer);
+
+    backToTop.addEventListener("click", () => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    });
+  })();
+</script>

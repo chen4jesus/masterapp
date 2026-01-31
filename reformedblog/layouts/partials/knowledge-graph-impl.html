@@ -1,0 +1,438 @@
+{{/*
+  Knowledge Graph Implementation Partial
+
+  This is the actual implementation used by both the shortcode and the layout partial.
+  Do not call this directly - use either:
+  - {{ partial "knowledge-graph.html" . }} in layouts
+  - {{< knowledge-graph >}} in content files
+*/}}
+
+{{- $graphId := printf "kg-%s" (md5 .RelPermalink) -}}
+{{- $currentPage := . -}}
+
+
+<!-- Knowledge Graph Button (Bottom Left) -->
+<button id="knowledge-graph-btn-{{ $graphId }}"
+        style="bottom: 20px !important; width: 40px !important; height: 40px !important;"
+        class="knowledge-graph-btn fixed left-8 z-50 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+        title="标签图谱"
+        onclick="openKnowledgeGraphModal('{{ $graphId }}')">
+  <svg class="w-7 h-7 text-white transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="3" stroke-width="2"/>
+    <circle cx="4" cy="6" r="2" stroke-width="2"/>
+    <circle cx="20" cy="6" r="2" stroke-width="2"/>
+    <circle cx="4" cy="18" r="2" stroke-width="2"/>
+    <circle cx="20" cy="18" r="2" stroke-width="2"/>
+    <line x1="9.5" y1="10" x2="5.5" y2="7.5" stroke-width="1.5"/>
+    <line x1="14.5" y1="10" x2="18.5" y2="7.5" stroke-width="1.5"/>
+    <line x1="9.5" y1="14" x2="5.5" y2="16.5" stroke-width="1.5"/>
+    <line x1="14.5" y1="14" x2="18.5" y2="16.5" stroke-width="1.5"/>
+  </svg>
+</button>
+
+<!-- Knowledge Graph Modal -->
+<div id="knowledge-graph-modal-{{ $graphId }}" class="knowledge-graph-modal fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm" onclick="closeKnowledgeGraphModal('{{ $graphId }}', event)">
+  <div class="relative w-[90vw] h-[85vh] max-w-6xl bg-[#0b0e14] rounded-2xl shadow-2xl overflow-hidden border border-white/10" onclick="event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-[#0b0e14] via-[#0b0e14]/90 to-transparent">
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-3 rounded-full bg-purple-500 animate-pulse"></div>
+        <h2 class="text-lg font-semibold text-white/90 tracking-wide">标签图谱</h2>
+        <span class="text-sm text-white/50">— 一级连接</span>
+      </div>
+      <button onclick="closeKnowledgeGraphModal('{{ $graphId }}', event)" class="p-2 rounded-full hover:bg-white/10 transition-colors duration-200">
+        <svg class="w-6 h-6 text-white/70 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Legend -->
+    <div class="absolute bottom-4 left-4 z-10 flex items-center gap-6 px-4 py-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+      <div class="flex items-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,1 15,8 8,15 1,8" fill="#8b5cf6"/></svg>
+        <span class="text-sm text-white/70">标签</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="#3b82f6" stroke="#fff" stroke-width="2"/></svg>
+        <span class="text-sm text-white/70">当前页面</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="#475569"/></svg>
+        <span class="text-sm text-white/70">相关页面</span>
+      </div>
+    </div>
+
+    <!-- Graph Container -->
+    <div id="knowledge-graph-container-{{ $graphId }}" class="w-full h-full"></div>
+
+    <!-- Loading Spinner -->
+    <div id="knowledge-graph-loader-{{ $graphId }}" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      <div class="w-12 h-12 border-2 border-white/10 border-t-purple-500 rounded-full animate-spin"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Knowledge Graph Script -->
+<script>
+(function() {
+  // Graph identity for this instance
+  const graphId = '{{ $graphId }}';
+  const currentRelPermalink = '{{ $currentPage.RelPermalink }}';
+
+  // Store graph instances globally
+  if (!window.knowledgeGraphInstances) {
+    window.knowledgeGraphInstances = {};
+  }
+
+  window.knowledgeGraphInstances[graphId] = {
+    data: null,
+    graph: null,
+    initialized: false
+  };
+
+  // Helper to filter global graph for current page neighborhood
+  const filterGraphForPage = (globalData, currentId) => {
+    // Helper to safely decode URIs
+    const safeDecode = (str) => {
+      try { return decodeURIComponent(str); } catch (e) { return str; }
+    };
+
+    const normalizedCurrentId = safeDecode(currentId);
+
+    if (!globalData) {
+      console.error('Knowledge Graph: No global data found');
+      return { nodes: [], links: [] };
+    }
+
+    // Normalize data: check for nodes and links
+    const rawNodes = globalData.nodes || [];
+    const rawLinks = globalData.links || [];
+
+    if (!globalData.nodes || !globalData.links) {
+       console.warn('Knowledge Graph: Missing nodes or links.');
+       return { nodes: [], links: [] };
+    }
+
+    // Normalize IDs in nodes and links
+    const nodes = rawNodes.map(n => ({ ...n, id: safeDecode(n.id) }));
+    const links = rawLinks.map(l => ({
+        ...l,
+        source: safeDecode(l.source),
+        target: safeDecode(l.target)
+    }));
+
+    const neighbors = new Set();
+    neighbors.add(normalizedCurrentId);
+
+    const validTags = new Set();
+
+    // 1. Find all tags connected to current page (Direct Neighbors)
+    links.forEach(l => {
+      if (l.source === normalizedCurrentId) validTags.add(l.target);
+      if (l.target === normalizedCurrentId) validTags.add(l.source);
+    });
+
+    // 2. Find all pages connected to those specific tags (First Level Connections)
+    // We strictly only look for connections involving the validTags found above.
+    const validPages = new Set();
+    validPages.add(normalizedCurrentId);
+
+    links.forEach(l => {
+      if (validTags.has(l.source)) validPages.add(l.target);
+      if (validTags.has(l.target)) validPages.add(l.source);
+    });
+
+    // Combine to form the allowed neighborhood
+    const allowedNodeIds = new Set([...validTags, ...validPages]);
+
+    return {
+      nodes: nodes
+        .filter(n => allowedNodeIds.has(n.id))
+        .map(n => ({...n, isCurrent: n.id === normalizedCurrentId})),
+      links: links.filter(l => allowedNodeIds.has(l.source) && allowedNodeIds.has(l.target))
+    };
+  };
+
+  // Global functions (only define once)
+  if (!window.openKnowledgeGraphModal) {
+    window.openKnowledgeGraphModal = function(id) {
+      const modal = document.getElementById('knowledge-graph-modal-' + id);
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+
+      const instance = window.knowledgeGraphInstances[id];
+      if (!instance.initialized) {
+        initKnowledgeGraph(id);
+      }
+    };
+
+    window.closeKnowledgeGraphModal = function(id, event) {
+      const modal = document.getElementById('knowledge-graph-modal-' + id);
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    };
+
+    window.initKnowledgeGraph = async function(id) {
+      const container = document.getElementById('knowledge-graph-container-' + id);
+      const loader = document.getElementById('knowledge-graph-loader-' + id);
+      const instance = window.knowledgeGraphInstances[id];
+
+      // Load global data if not present
+      if (!window.globalGraphData) {
+        try {
+          const response = await fetch('/graphdata.json');
+          if (!response.ok) throw new Error('Network response was not ok');
+          window.globalGraphData = await response.json();
+        } catch (e) {
+          console.error('Failed to load graph data', e);
+          loader.innerHTML = '<div class="text-white/50 text-sm">加载失败: 数据源不可用</div>';
+          return;
+        }
+      }
+
+      // Filter for this specific page
+      instance.data = filterGraphForPage(window.globalGraphData, currentRelPermalink);
+
+      if (!instance.data.nodes || instance.data.nodes.length === 0) {
+        loader.innerHTML = '<div class="text-white/50 text-sm">暂无相关数据</div>';
+        return;
+      }
+
+      // Check if we need to load the force-graph library
+      if (typeof ForceGraph === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/force-graph';
+        script.onload = () => createGraph(id, container, loader, instance);
+        document.head.appendChild(script);
+      } else {
+        createGraph(id, container, loader, instance);
+      }
+    };
+
+  window.createGraph = function(id, container, loader, instance) {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      const graphData = instance.data;
+
+      // Variables for interactions
+      let lastClickTime = 0;
+      let lastClickNodeId = null;
+      let deletePopup = document.getElementById('kg-delete-popup-' + id);
+
+      // Create popup if not exists
+      if (!deletePopup) {
+         const popupHtml = `
+            <div id="kg-delete-popup-${id}" class="fixed hidden z-[1000] bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2 transform transition-all duration-200 scale-95 opacity-0">
+                <button id="kg-delete-btn-${id}" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Delete
+                </button>
+            </div>
+         `;
+         document.body.insertAdjacentHTML('beforeend', popupHtml);
+         deletePopup = document.getElementById(`kg-delete-popup-${id}`);
+
+         // Click outside to close
+         document.addEventListener('click', (e) => {
+             if (deletePopup && !deletePopup.classList.contains('hidden') && !deletePopup.contains(e.target)) {
+                 deletePopup.classList.add('hidden');
+                 deletePopup.classList.add('scale-95', 'opacity-0');
+             }
+         });
+      }
+
+      instance.graph = ForceGraph()(container)
+
+        .graphData(graphData)
+        .width(width)
+        .height(height)
+        .nodeId('id')
+        .nodeLabel(node => node.title)
+        .backgroundColor('#0b0e14')
+        .linkColor(() => 'rgba(139, 92, 246, 0.2)')
+        .linkWidth(1.5)
+        .linkDirectionalParticles(2)
+        .linkDirectionalParticleSpeed(0.004)
+        .linkDirectionalParticleWidth(2)
+        .linkDirectionalParticleColor(() => 'rgba(139, 92, 246, 0.6)')
+        .nodeCanvasObject((node, ctx, globalScale) => {
+          const label = node.title;
+          const isKeyword = node.type === 'keyword';
+          const isCurrent = node.isCurrent === true;
+          const fontSize = isKeyword ? 14/globalScale : 11/globalScale;
+
+          ctx.font = `${isKeyword || isCurrent ? '600 ' : '400 '}${fontSize}px 'Outfit', 'Inter', sans-serif`;
+
+          // Draw Node Shape
+          const size = isKeyword ? 10 : (isCurrent ? 8 : 5);
+
+          // Glow effect
+          ctx.shadowColor = isKeyword ? 'rgba(139, 92, 246, 0.6)' : (isCurrent ? 'rgba(59, 130, 246, 0.6)' : 'rgba(0,0,0,0.3)');
+          ctx.shadowBlur = 15 / globalScale;
+
+          if (isKeyword) {
+            // Diamond shape for Keywords
+            ctx.fillStyle = '#8b5cf6';
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y - size/globalScale);
+            ctx.lineTo(node.x + size/globalScale, node.y);
+            ctx.lineTo(node.x, node.y + size/globalScale);
+            ctx.lineTo(node.x - size/globalScale, node.y);
+            ctx.closePath();
+            ctx.fill();
+          } else {
+            // Circle for Pages
+            ctx.fillStyle = isCurrent ? '#3b82f6' : '#475569';
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, size / globalScale, 0, 2 * Math.PI, false);
+            ctx.fill();
+
+            if (isCurrent) {
+              ctx.strokeStyle = '#ffffff';
+              ctx.lineWidth = 2.5 / globalScale;
+              ctx.stroke();
+            }
+          }
+
+          ctx.shadowBlur = 0;
+
+          // Draw Labels
+          if (globalScale > 0.5 || isKeyword || isCurrent) {
+            const labelY = node.y + (size + 14) / globalScale;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Background for keyword labels
+            if (isKeyword) {
+              const textWidth = ctx.measureText(label).width;
+              ctx.fillStyle = 'rgba(11, 14, 20, 0.85)';
+              const padding = 4/globalScale;
+              ctx.fillRect(
+                node.x - textWidth/2 - padding,
+                labelY - fontSize/2 - padding/2,
+                textWidth + padding*2,
+                fontSize + padding
+              );
+            }
+
+            ctx.fillStyle = isKeyword ? '#ddd6fe' : (isCurrent ? '#ffffff' : 'rgba(148, 163, 184, 0.85)');
+            ctx.fillText(label, node.x, labelY);
+          }
+        })
+        .onNodeClick(node => {
+          if (node.type === 'page' && !node.isCurrent) {
+            window.location.href = node.id;
+          } else if (node.type === 'keyword') {
+             // Double-click detection
+             const now = new Date().getTime();
+             const isDoubleClick = (node.id === lastClickNodeId && (now - lastClickTime) < 300);
+
+             lastClickTime = now;
+             lastClickNodeId = node.id;
+
+             if (isDoubleClick) {
+                 const adminConfig = document.getElementById('admin-tools-config');
+                 if (adminConfig && window.AdminAuth) {
+                     // Show Popup
+                     const coords = instance.graph.graph2ScreenCoords(node.x, node.y);
+                     const rect = container.getBoundingClientRect();
+                     const finalX = rect.left + coords.x;
+                     const finalY = rect.top + coords.y;
+
+                     deletePopup.style.left = `${finalX - 40}px`; // Center align approx
+                     deletePopup.style.top = `${finalY - 50}px`; // Above node
+                     deletePopup.classList.remove('hidden');
+
+                     // Small delay for transition
+                     setTimeout(() => {
+                        deletePopup.classList.remove('opacity-0', 'scale-95');
+                     }, 10);
+
+                     // Handle Delete Click
+                     const btn = document.getElementById(`kg-delete-btn-${id}`);
+
+                     btn.onclick = function(e) {
+                         e.stopPropagation(); // Prevent bubbling
+                         const filePath = adminConfig.dataset.filePath;
+
+                         const originalText = btn.innerHTML;
+                         btn.innerHTML = '...';
+
+                         // Call API
+                         window.AdminAuth.authenticatedFetch(`http://${window.location.hostname}:3000/api/v1/tags`, {
+                             method: 'DELETE',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ filePath, tag: node.title })
+                         })
+                         .then(res => res.json())
+                         .then(data => {
+                             if(data.error) {
+                                 alert(data.error);
+                                 btn.innerHTML = originalText;
+                             }
+                             else window.location.reload();
+                         })
+                         .catch(err => {
+                             alert("Error: " + err);
+                             btn.innerHTML = originalText;
+                         });
+                     };
+                 }
+             }
+          }
+        })
+        .onNodeHover(node => {
+          const isInteractive = (node && node.type === 'page' && !node.isCurrent) || (node && node.type === 'keyword' && document.getElementById('admin-tools-config'));
+          container.style.cursor = isInteractive ? 'pointer' : 'default';
+        });
+
+      // Force simulation settings
+      instance.graph.d3Force('charge').strength(-500);
+      instance.graph.d3Force('link').distance(80);
+      instance.graph.d3Force('center').x(0).y(0);
+
+      // Center on current page after layout settles
+      setTimeout(() => {
+        const currentNode = graphData.nodes.find(n => n.isCurrent);
+        if (currentNode && currentNode.x !== undefined && currentNode.y !== undefined) {
+          // Focus on the current node explicitly
+          instance.graph.centerAt(currentNode.x, currentNode.y, 1000);
+          instance.graph.zoom(3, 1000); // 3x zoom and 1000ms transition
+        }
+        loader.style.display = 'none';
+      }, 800);
+
+      instance.initialized = true;
+    };
+
+    // Handle window resize for all graph instances
+    window.addEventListener('resize', () => {
+      Object.keys(window.knowledgeGraphInstances).forEach(id => {
+        const instance = window.knowledgeGraphInstances[id];
+        const modal = document.getElementById('knowledge-graph-modal-' + id);
+        if (instance.graph && modal && !modal.classList.contains('hidden')) {
+          const container = document.getElementById('knowledge-graph-container-' + id);
+          instance.graph.width(container.clientWidth).height(container.clientHeight);
+        }
+      });
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        Object.keys(window.knowledgeGraphInstances).forEach(id => {
+          const modal = document.getElementById('knowledge-graph-modal-' + id);
+          if (modal && !modal.classList.contains('hidden')) {
+            closeKnowledgeGraphModal(id, e);
+          }
+        });
+      }
+    });
+  }
+})();
+</script>

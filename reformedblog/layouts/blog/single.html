@@ -1,0 +1,871 @@
+{{ define "main" }}
+  <!-- Reading Progress Bar (Desktop) -->
+  <div
+    id="reading-progress-container"
+    class="fixed right-6 top-1/2 z-50 -translate-y-1/2 hidden lg:flex flex-col items-center w-12 space-y-4 transition-opacity duration-300 opacity-0">
+    <span
+      id="reading-progress-text"
+      class="w-full text-center text-[12px] font-bold text-primary dark:text-darkmode-primary horizontal-text mb-2"
+      >0%</span
+    >
+    <div
+      class="h-64 w-1.5 bg-border/20 dark:bg-darkmode-border/20 rounded-full overflow-hidden relative">
+      <div
+        id="reading-progress-bar"
+        class="absolute top-0 left-0 w-full bg-primary dark:bg-darkmode-primary transition-all duration-200 ease-out h-0"></div>
+    </div>
+  </div>
+
+  <!-- Colorful TOC Navigation Ribbon (Right Side - Desktop) -->
+  <div
+    id="toc-ribbon"
+    class="toc-ribbon fixed left-40 top-1/2 z-50 -translate-y-1/2 hidden lg:flex opacity-80 transition-opacity duration-300 opacity-0"
+    style="display: none;">
+    <div class="toc-ribbon-container overflow-hidden relative">
+      <div
+        class="toc-ribbon-header text-center text-lg overflow-hidden font-bold text-gray-600 dark:text-gray-400 mb-2 px-2">
+        目录
+      </div>
+      <div class="toc-ribbon-items overflow-hidden" id="toc-ribbon-items">
+        <!-- TOC items will be dynamically inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Colorful TOC Navigation Ribbon (Mobile - Bottom) -->
+  <div
+    id="toc-ribbon-mobile"
+    class="toc-ribbon-mobile fixed bottom-0 left-0 right-0 z-40 hidden lg:block opacity-0 pointer-events-none"
+    style="display: none !important;">
+    <div
+      class="toc-ribbon-mobile-container bg-white/95 dark:bg-darkmode-body/95 backdrop-blur-md border-t border-border/20 dark:border-darkmode-border/20 shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
+      <div
+        class="toc-ribbon-mobile-items flex overflow-x-auto gap-1 px-3 py-2 scrollbar-hide"
+        id="toc-ribbon-mobile-items">
+        <!-- Mobile TOC items will be dynamically inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Reading Progress Bar (Mobile) -->
+  <div
+    id="reading-progress-mobile-container"
+    class="fixed left-0 bottom-0 right-0 z-50 h-[2px] bg-border/10 dark:bg-darkmode-border/10 lg:hidden transition-opacity duration-300 opacity-0 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+    <div
+      id="reading-progress-mobile-bar"
+      class="h-full bg-primary dark:bg-darkmode-primary transition-all duration-200 ease-out w-0"></div>
+  </div>
+
+  <section class="section pt-7">
+    <div class="container">
+      <div class="row justify-center">
+        <article class="lg:col-10">
+          {{ $image:= .Params.image }}
+          {{ if $image }}
+            <div class="mb-10">
+              {{ partial "image" (dict "Src" $image "Context" .Page "Alt" .Title "Class" "w-3/4 mx-auto rounded") }}
+            </div>
+          {{ end }}
+          <h1 class="h2 mb-4">
+            {{ .Title }}
+          </h1>
+          <ul class="mb-4">
+            <li class="mr-4 inline-block">
+              <a
+                href="{{ `authors/` | relLangURL }}{{ .Params.Author | urlize }}/">
+                <i class="fa-regular fa-circle-user mr-2"></i
+                >{{ .Params.author }}
+              </a>
+            </li>
+            {{ $categories:= .Params.categories }}
+            {{ if $categories }}
+              <li class="mr-4 inline-block">
+                <i class="fa-regular fa-folder mr-2"></i>
+                {{ range $i,$p:= $categories }}
+                  <a
+                    href="{{ `categories/` | relLangURL }}{{ . | urlize | lower }}/"
+                    class=""
+                    >{{ . | humanize }}{{ if ne $i (sub (len $categories) 1) }}
+                      {{ "," }}
+                    {{ end }}
+                  </a>
+                {{ end }}
+              </li>
+            {{ end }}
+            <li class="mr-4 inline-block">
+              <i class="fa-regular fa-clock mr-2"></i>
+              {{ time.Format ":date_long" .PublishDate }}
+            </li>
+          </ul>
+          <div class="content mb-10">
+            {{ .Content }}
+          </div>
+          <div class="row items-start justify-between">
+            {{ $tags:= .Params.tags }}
+            {{ if $tags }}
+              <div class="lg:col-6 mb-10 flex items-center lg:mb-0">
+                <h5 class="mr-3">{{ T "tags" | default "Tags" }} :</h5>
+                <ul>
+                  {{ range $i,$p:= $tags }}
+                    <li class="inline-block">
+                      <a
+                        class="bg-light hover:bg-primary dark:bg-darkmode-light dark:hover:bg-darkmode-primary dark:hover:text-text-dark m-1 block rounded px-3 py-1 hover:text-white"
+                        href="{{ `tags/` | relLangURL }}{{ . | urlize | lower }}/">
+                        {{ . | humanize }}
+                      </a>
+                    </li>
+                  {{ end }}
+                </ul>
+              </div>
+            {{ end }}
+            <div class="lg:col-6 flex items-center lg:justify-end">
+              <h5>{{ T "share" | default "Share" }} :</h5>
+              {{ partial "social-share" (dict "Context" . "Class" "share-icons" "Title" .Title "Whatsapp" false "Telegram" false "Linkedin" false "Pinterest" false "Tumblr" false "Vk" false "Reddit" false) }}
+            </div>
+          </div>
+          <!-- comments -->
+          {{ if site.Config.Services.Disqus.Shortname }}
+            <div class="mt-20">
+              {{ partial "disqus.html" . }}
+            </div>
+          {{ end }}
+        </article>
+      </div>
+
+      <!-- Related posts -->
+      {{ $related := .Site.RegularPages.Related . | first 10 }}
+      {{ $related = $related | first 3 }}
+      {{ with $related }}
+        <div class="section pb-0">
+          <h2 class="h3 mb-12">
+            {{ T "related_posts" | default "Related Posts" }}
+          </h2>
+          <div class="row">
+            {{ range . }}
+              <div class="lg:col-4 md:col-6 mb-14">
+                {{ partial "components/blog-card" . }}
+              </div>
+            {{ end }}
+          </div>
+        </div>
+      {{ end }}
+    </div>
+  </section>
+
+  <style>
+    .toc-ribbon {
+      pointer-events: none;
+    }
+
+    .toc-ribbon-container {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-height: 65vh;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .toc-ribbon-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .toc-ribbon-header {
+      pointer-events: none;
+      width: 220px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .toc-ribbon-item {
+      position: relative;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .toc-ribbon-item .ribbon-bg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .toc-ribbon-item .ribbon-content {
+      position: relative;
+      padding: 10px 18px 10px 14px;
+      background: linear-gradient(
+        to right,
+        var(--ribbon-color, rgba(59, 130, 246, 0.15)),
+        rgba(59, 130, 246, 0.05)
+      );
+      backdrop-filter: blur(8px);
+      border-radius: 0 6px 6px 0;
+      margin-left: 8px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--ribbon-text-color, #374151);
+      font-weight: 500;
+    }
+
+    .toc-ribbon-item:hover .ribbon-content,
+    .toc-ribbon-item.active .ribbon-content {
+      background: linear-gradient(
+        to right,
+        var(--ribbon-color, rgba(59, 130, 246, 0.4)),
+        var(--ribbon-color, rgba(59, 130, 246, 0.2))
+      );
+      max-width: 320px;
+      padding-left: 24px;
+    }
+
+    .toc-ribbon-item.active .ribbon-content {
+      font-weight: 600;
+      box-shadow: 2px 0 8px var(--ribbon-color, rgba(59, 130, 246, 0.3));
+    }
+
+    .toc-ribbon-item .ribbon-indicator {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--ribbon-color, #3b82f6);
+      border-radius: 0 3px 3px 0;
+      opacity: 0.6;
+      transition: all 0.3s ease;
+    }
+
+    .toc-ribbon-item:hover .ribbon-indicator,
+    .toc-ribbon-item.active .ribbon-indicator {
+      opacity: 1;
+      width: 8px;
+    }
+
+    /* Dark mode styles */
+    .dark .toc-ribbon-item .ribbon-content {
+      color: var(--ribbon-text-color-dark, #e5e7eb);
+      background: linear-gradient(
+        to right,
+        var(--ribbon-color-dark, rgba(96, 165, 250, 0.2)),
+        rgba(96, 165, 250, 0.08)
+      );
+    }
+
+    .dark .toc-ribbon-item:hover .ribbon-content,
+    .dark .toc-ribbon-item.active .ribbon-content {
+      background: linear-gradient(
+        to right,
+        var(--ribbon-color-dark, rgba(96, 165, 250, 0.5)),
+        var(--ribbon-color-dark, rgba(96, 165, 250, 0.3))
+      );
+    }
+
+    /* Mobile TOC Ribbon Styles */
+    .scrollbar-hide {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+
+    .toc-ribbon-mobile-item {
+      flex-shrink: 0;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(156, 163, 175, 0.15);
+      border: 1px solid rgba(156, 163, 175, 0.3);
+      font-size: 11px;
+      line-height: 1.3;
+      color: #6b7280;
+      font-weight: 500;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: 0.6;
+    }
+
+    .toc-ribbon-mobile-item:hover {
+      opacity: 0.8;
+      transform: translateY(-1px);
+    }
+
+    .toc-ribbon-mobile-item.active {
+      background: var(--ribbon-color, rgba(59, 130, 246, 0.25));
+      border-color: var(--ribbon-color, rgba(59, 130, 246, 0.5));
+      color: var(--ribbon-text-color, #374151);
+      font-weight: 600;
+      opacity: 1;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px var(--ribbon-color, rgba(59, 130, 246, 0.2));
+    }
+
+    .dark .toc-ribbon-mobile-item {
+      background: rgba(75, 85, 99, 0.2);
+      border-color: rgba(75, 85, 99, 0.3);
+      color: #9ca3af;
+    }
+
+    .dark .toc-ribbon-mobile-item:hover {
+      opacity: 0.9;
+    }
+
+    .dark .toc-ribbon-mobile-item.active {
+      background: var(--ribbon-color-dark, rgba(96, 165, 250, 0.35));
+      border-color: var(--ribbon-color-dark, rgba(96, 165, 250, 0.6));
+      color: var(--ribbon-text-color-dark, #e5e7eb);
+      opacity: 1;
+      box-shadow: 0 2px 8px var(--ribbon-color-dark, rgba(96, 165, 250, 0.3));
+    }
+
+    /* Smooth scroll behavior */
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Reading Progress Bar Logic
+      const progressBar = document.getElementById("reading-progress-bar");
+      const mobileProgressBar = document.getElementById(
+        "reading-progress-mobile-bar",
+      );
+      const progressText = document.getElementById("reading-progress-text");
+      const container = document.getElementById("reading-progress-container");
+      const mobileContainer = document.getElementById(
+        "reading-progress-mobile-container",
+      );
+      const content = document.querySelector(".content");
+
+      if (!content || !progressBar) return;
+
+      const updateProgress = () => {
+        const contentBox = content.getBoundingClientRect();
+        const scrollTop = window.scrollY;
+
+        // Calculate reading progress
+        const windowHeight = window.innerHeight;
+        const contentTop = contentBox.top + scrollTop;
+        const contentHeight = contentBox.height;
+        const startPoint = contentTop - windowHeight;
+        const endPoint = contentTop + contentHeight - windowHeight;
+
+        let progress =
+          ((scrollTop - startPoint) / (endPoint - startPoint)) * 100;
+        progress = Math.max(0, Math.min(100, progress));
+
+        if (progressBar) progressBar.style.height = `${progress}%`;
+        if (progressText) progressText.innerText = `${Math.round(progress)}%`;
+        if (mobileProgressBar) mobileProgressBar.style.width = `${progress}%`;
+
+        // Visibility Logic: Show when screen top is close to title
+        const title = document.querySelector("article h1");
+        let isStarted = false;
+
+        if (title) {
+          // Show when title is within 100px of the top of the viewport (or scrolled past)
+          isStarted = title.getBoundingClientRect().top < 300;
+        } else {
+          // Fallback if title not found
+          isStarted = contentBox.top < 300;
+        }
+
+        const isVisible = isStarted && contentBox.bottom > 0;
+
+        if (isVisible) {
+          container?.classList.remove("opacity-0");
+          if (container) container.style.pointerEvents = "auto";
+          mobileContainer?.classList.remove("opacity-0");
+        } else {
+          container?.classList.add("opacity-0");
+          if (container) container.style.pointerEvents = "none";
+          mobileContainer?.classList.add("opacity-0");
+        }
+      };
+
+      window.addEventListener("scroll", updateProgress);
+      setTimeout(updateProgress, 100);
+
+      // TOC Ribbon Logic
+      const tocRibbon = document.getElementById("toc-ribbon");
+      const tocRibbonItems = document.getElementById("toc-ribbon-items");
+      const tocRibbonHeader = document.getElementById("toc-ribbon-header");
+      const tocRibbonContainer = document.getElementById(
+        "toc-ribbon-container",
+      );
+      const tocRibbonMobile = document.getElementById("toc-ribbon-mobile");
+      const tocRibbonMobileItems = document.getElementById(
+        "toc-ribbon-mobile-items",
+      );
+
+      // Color palette for different sections
+      const colors = [
+        {
+          bg: "rgba(239, 68, 68, 0.15)",
+          darkBg: "rgba(248, 113, 113, 0.2)",
+          text: "#dc2626",
+          darkText: "#fca5a5",
+          solid: "#ef4444",
+        }, // Red
+        {
+          bg: "rgba(249, 115, 22, 0.15)",
+          darkBg: "rgba(251, 146, 60, 0.2)",
+          text: "#ea580c",
+          darkText: "#fdba74",
+          solid: "#f97316",
+        }, // Orange
+        {
+          bg: "rgba(234, 179, 8, 0.15)",
+          darkBg: "rgba(250, 204, 21, 0.2)",
+          text: "#ca8a04",
+          darkText: "#fde047",
+          solid: "#eab308",
+        }, // Yellow
+        {
+          bg: "rgba(34, 197, 94, 0.15)",
+          darkBg: "rgba(74, 222, 128, 0.2)",
+          text: "#16a34a",
+          darkText: "#86efac",
+          solid: "#22c55e",
+        }, // Green
+        {
+          bg: "rgba(6, 182, 212, 0.15)",
+          darkBg: "rgba(34, 211, 238, 0.2)",
+          text: "#0891b2",
+          darkText: "#67e8f9",
+          solid: "#06b6d4",
+        }, // Cyan
+        {
+          bg: "rgba(59, 130, 246, 0.15)",
+          darkBg: "rgba(96, 165, 250, 0.2)",
+          text: "#2563eb",
+          darkText: "#93c5fd",
+          solid: "#3b82f6",
+        }, // Blue
+        {
+          bg: "rgba(139, 92, 246, 0.15)",
+          darkBg: "rgba(167, 139, 250, 0.2)",
+          text: "#7c3aed",
+          darkText: "#c4b5fd",
+          solid: "#8b5cf6",
+        }, // Purple
+        {
+          bg: "rgba(236, 72, 153, 0.15)",
+          darkBg: "rgba(251, 113, 133, 0.2)",
+          text: "#db2777",
+          darkText: "#f9a8d4",
+          solid: "#ec4899",
+        }, // Pink
+        {
+          bg: "rgba(168, 85, 247, 0.15)",
+          darkBg: "rgba(192, 132, 252, 0.2)",
+          text: "#9333ea",
+          darkText: "#d8b4fe",
+          solid: "#a855f7",
+        }, // Violet
+        {
+          bg: "rgba(20, 184, 166, 0.15)",
+          darkBg: "rgba(45, 212, 191, 0.2)",
+          text: "#0d9488",
+          darkText: "#99f6e4",
+          solid: "#14b8a6",
+        }, // Teal
+      ];
+
+      // Generate TOC from headings
+      const headings = Array.from(content.querySelectorAll("h2, h3, h4, h5, h6"));
+      const tocData = [];
+      const processedHeadings = new Set();
+
+      headings.forEach((heading, index) => {
+        if (processedHeadings.has(heading)) return;
+
+        let primaryText = heading.textContent.trim();
+        let secondaryText = "";
+
+        // Detect bilingual row headings (headings inside the bilingual shortcode)
+        const bilingualRow = heading.closest('.bilingual-row');
+        if (bilingualRow) {
+          const rowHeadings = Array.from(bilingualRow.querySelectorAll("h2, h3, h4, h5, h6"));
+          if (rowHeadings.length > 1) {
+            const hIndex = rowHeadings.indexOf(heading);
+            if (hIndex === 0) {
+              primaryText = rowHeadings[0].textContent.trim();
+              secondaryText = rowHeadings[1].textContent.trim();
+              rowHeadings.forEach(h => processedHeadings.add(h));
+            } else {
+              processedHeadings.add(heading);
+              return;
+            }
+          }
+        }
+
+        // Detect inline bilingual headings (e.g., "Title / 标题")
+        if (!secondaryText && primaryText.includes(" / ")) {
+          const parts = primaryText.split(" / ");
+          if (parts.length >= 2) {
+            primaryText = parts[0].trim();
+            secondaryText = parts[1].trim();
+          }
+        }
+
+        if (!processedHeadings.has(heading)) {
+          processedHeadings.add(heading);
+        }
+
+        tocData.push({
+          id: heading.id,
+          text: primaryText,
+          secondaryText: secondaryText,
+          level: parseInt(heading.tagName.substring(1)),
+          color: colors[index % colors.length],
+        });
+      });
+
+      // Only show ribbon if there are TOC items
+      if (tocData.length > 0) {
+        // Function to update display based on screen size
+        const updateRibbonDisplay = () => {
+          const isMobile = window.innerWidth < 1024;
+          if (isMobile) {
+            // Mobile: show mobile ribbon, hide desktop ribbon
+            tocRibbon.style.setProperty("display", "none", "important");
+            tocRibbonMobile.style.setProperty("display", "block", "important");
+          } else {
+            // Desktop: hide mobile ribbon, let scroll logic handle desktop ribbon visibility
+            // We do NOT force display:flex here to avoid flash on load
+            tocRibbonMobile.style.setProperty("display", "none", "important");
+          }
+        };
+
+        // Initial display setup
+        updateRibbonDisplay();
+
+        // Update on resize
+        window.addEventListener("resize", updateRibbonDisplay);
+
+        // Build Desktop TOC ribbon HTML
+        tocRibbonItems.innerHTML = tocData
+          .map(
+            (item, index) => `
+          <div class="toc-ribbon-item"
+               data-id="${item.id}"
+               title="${item.secondaryText}"
+               style="--ribbon-color: ${item.color.bg}; --ribbon-color-dark: ${item.color.darkBg}; --ribbon-text-color: ${item.color.text}; --ribbon-text-color-dark: ${item.color.darkText};">
+            <div class="ribbon-indicator" style="background-color: ${item.color.solid};"></div>
+            <div class="ribbon-content">
+              ${item.level > 2 ? '<span style="opacity: 0.7;">' : ""}${item.text}${item.level > 2 ? "</span>" : ""}
+            </div>
+          </div>
+        `,
+          )
+          .join("");
+
+        // Build Mobile TOC ribbon HTML
+        tocRibbonMobileItems.innerHTML = tocData
+          .map(
+            (item, index) => `
+          <div class="toc-ribbon-mobile-item"
+               data-id="${item.id}"
+               title="${item.secondaryText}"
+               style="--ribbon-color: ${item.color.bg}; --ribbon-color-dark: ${item.color.darkBg}; --ribbon-text-color: ${item.color.text}; --ribbon-text-color-dark: ${item.color.darkText};">
+            ${item.level > 2 ? '<span style="opacity: 0.8;">' : ""}${item.text}${item.level > 2 ? "</span>" : ""}
+          </div>
+        `,
+          )
+          .join("");
+
+        // Function to update active TOC item
+        const setActiveTocItem = (id) => {
+          // Update Desktop TOC
+          const tocItem = tocRibbonItems.querySelector(`[data-id="${id}"]`);
+          if (tocItem) {
+            tocRibbonItems
+              .querySelectorAll(".toc-ribbon-item")
+              .forEach((item) => {
+                item.classList.remove("active");
+              });
+            tocItem.classList.add("active");
+          }
+
+          // Update Mobile TOC
+          const tocMobileItem = tocRibbonMobileItems.querySelector(
+            `[data-id="${id}"]`,
+          );
+          if (tocMobileItem) {
+            tocRibbonMobileItems
+              .querySelectorAll(".toc-ribbon-mobile-item")
+              .forEach((item) => {
+                item.classList.remove("active");
+              });
+            tocMobileItem.classList.add("active");
+
+            // Scroll active item into view on mobile
+            tocMobileItem.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "center",
+            });
+          }
+        };
+
+        // Intersection Observer for tracking active section
+        const observerOptions = {
+          rootMargin: "-10% 0px -60% 0px",
+          threshold: [0, 0.1, 0.5, 1],
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const id = entry.target.id;
+              setActiveTocItem(id);
+            }
+          });
+        }, observerOptions);
+
+        // Observe all headings
+        headings.forEach((heading) => observer.observe(heading));
+
+        // Fallback: Set first heading as active initially if none is intersecting
+        setTimeout(() => {
+          const firstHeading = headings[0];
+          if (
+            firstHeading &&
+            !tocRibbonItems.querySelector(".toc-ribbon-item.active")
+          ) {
+            setActiveTocItem(firstHeading.id);
+          }
+        }, 300);
+
+        // Scroll-based active section detection (more reliable for mobile)
+        let ticking = false;
+        window.addEventListener("scroll", () => {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              const scrollPosition = window.scrollY + window.innerHeight * 0.3;
+              let currentHeading = null;
+
+              headings.forEach((heading) => {
+                if (heading.offsetTop <= scrollPosition) {
+                  currentHeading = heading;
+                }
+              });
+
+              if (currentHeading) {
+                setActiveTocItem(currentHeading.id);
+              }
+
+              ticking = false;
+            });
+            ticking = true;
+          }
+        });
+
+        // Get header height for scroll offset
+        const getHeaderHeight = () => {
+          const header = document.querySelector("header");
+          return header ? header.offsetHeight : 80;
+        };
+
+        // Desktop: Click to scroll
+        tocRibbonItems.addEventListener("click", (e) => {
+          const item = e.target.closest(".toc-ribbon-item");
+          if (item) {
+            const id = item.dataset.id;
+            const target = document.getElementById(id);
+            if (target) {
+              const headerHeight = getHeaderHeight();
+              const targetPosition =
+                target.getBoundingClientRect().top +
+                window.scrollY -
+                headerHeight -
+                20;
+              window.scrollTo({
+                top: targetPosition,
+                behavior: "smooth",
+              });
+            }
+          }
+        });
+
+        // Mobile: Click to scroll
+        tocRibbonMobileItems.addEventListener("click", (e) => {
+          const item = e.target.closest(".toc-ribbon-mobile-item");
+          if (item) {
+            const id = item.dataset.id;
+            const target = document.getElementById(id);
+            if (target) {
+              const headerHeight = getHeaderHeight();
+              const targetPosition =
+                target.getBoundingClientRect().top +
+                window.scrollY -
+                headerHeight -
+                20;
+              window.scrollTo({
+                top: targetPosition,
+                behavior: "smooth",
+              });
+            }
+          }
+        });
+
+        // Mobile auto show/hide logic
+        let mobileHideTimeout;
+        const isMobile = () => window.innerWidth < 1024;
+
+        const showMobileToc = () => {
+          if (!isMobile() || !tocRibbonMobile) return;
+          tocRibbonMobile.classList.remove("opacity-0");
+          tocRibbonMobile.style.pointerEvents = "auto";
+
+          // Clear existing timeout and set new one
+          clearTimeout(mobileHideTimeout);
+          mobileHideTimeout = setTimeout(() => {
+            hideMobileToc();
+          }, 3000);
+        };
+
+        const hideMobileToc = () => {
+          if (!isMobile() || !tocRibbonMobile) return;
+          tocRibbonMobile.classList.add("opacity-0");
+          tocRibbonMobile.style.pointerEvents = "none";
+        };
+
+        // Show on scroll
+        let scrollTimeout;
+        window.addEventListener("scroll", () => {
+          if (!isMobile()) return;
+
+          showMobileToc();
+
+          // Debounce scroll events
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            // Will hide after 3 seconds of no scrolling
+          }, 100);
+        });
+
+        // Show on touch/tap on mobile
+        if (tocRibbonMobile) {
+          tocRibbonMobile.addEventListener("touchstart", () => {
+            clearTimeout(mobileHideTimeout);
+          });
+
+          tocRibbonMobile.addEventListener("touchend", () => {
+            mobileHideTimeout = setTimeout(() => {
+              hideMobileToc();
+            }, 3000);
+          });
+        }
+
+        // Desktop: Show ribbon when content has TOC and is visible, with auto-hide
+        let desktopHideTimeout;
+
+        const showDesktopToc = () => {
+          if (isMobile() || !tocRibbon) return;
+
+          tocRibbon.classList.remove("opacity-0");
+          tocRibbon.style.display = "flex";
+          // We need pointer events to be auto so users can click items
+          tocRibbon.style.pointerEvents = "auto";
+          tocRibbon.style.opacity = "0.8"; // Restore opacity
+
+          // Clear existing timeout and set new one
+          clearTimeout(desktopHideTimeout);
+          desktopHideTimeout = setTimeout(() => {
+            hideDesktopToc();
+          }, 3000);
+        };
+
+        const hideDesktopToc = () => {
+          if (isMobile() || !tocRibbon) return;
+          // Don't hide if the user is hovering over the TOC
+          if (tocRibbon.matches(':hover')) return;
+
+          tocRibbon.style.opacity = "0"; // Fade out
+          // Allow pointer events to pass through when hidden so it doesn't block content
+          // BUT we still want to detect mouseover to show it again if needed
+          setTimeout(() => {
+             if(tocRibbon.style.opacity === "0") {
+                tocRibbon.style.pointerEvents = "none";
+             }
+          }, 300); // Wait for transition
+        };
+
+        const updateDesktopTocVisibility = () => {
+          if (isMobile()) {
+            tocRibbon?.classList.add("opacity-0");
+             if(tocRibbon) tocRibbon.style.display = "none";
+            return;
+          }
+
+          const contentBox = content.getBoundingClientRect();
+          const title = document.querySelector("article h1");
+          let isStarted = false;
+
+          if (title) {
+            isStarted = title.getBoundingClientRect().top < 300;
+          } else {
+            isStarted = contentBox.top < 300;
+          }
+
+          const isVisible = isStarted && contentBox.bottom > 550;
+
+          if (isVisible && tocRibbon) {
+            // Trigger the show logic which handles the auto-hide timer
+            showDesktopToc();
+          } else if (tocRibbon) {
+             // Force hide if outside content area
+            tocRibbon?.classList.add("opacity-0");
+            tocRibbon.style.display = "none";
+            clearTimeout(desktopHideTimeout);
+          }
+        };
+
+        window.addEventListener("scroll", () => {
+            // Debounce/throttle somewhat implicitly by relying on the timeout reset in showDesktopToc
+            updateDesktopTocVisibility();
+        });
+
+        // Add hover listeners to keep it visible while interacting
+        if (tocRibbon) {
+            tocRibbon.addEventListener("mouseenter", () => {
+                clearTimeout(desktopHideTimeout);
+                tocRibbon.style.opacity = "1"; // Go full opacity on hover
+            });
+
+            tocRibbon.addEventListener("mouseleave", () => {
+               // Restart timer on leave
+               desktopHideTimeout = setTimeout(() => {
+                    hideDesktopToc();
+               }, 3000);
+            });
+
+            // Allow "waking up" the TOC if it's hidden but user moves mouse near the left edge where it usually is
+            // or just rely on scroll. The user asked for "auto-hide... like the mobile view", which implies
+            // showing on scroll. The scroll listener above handles that.
+        }
+
+        setTimeout(updateDesktopTocVisibility, 100);
+      }
+    });
+  </script>
+<!-- {{ partial "admin-tools.html" . }} -->
+<!-- {{ partial "keyword-highlighter.html" . }} -->
+{{ end }}

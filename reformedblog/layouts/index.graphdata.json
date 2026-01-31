@@ -1,0 +1,20 @@
+{{- /* Force rebuild 1 */ -}}
+{{- $nodes := slice -}}
+{{- $links := slice -}}
+{{- $tags := dict -}}
+
+{{- range site.RegularPages -}}
+  {{- $p := . -}}
+  {{- $nodes = $nodes | append (dict "id" $p.RelPermalink "title" $p.Title "type" "page") -}}
+  {{- range $tag := $p.Params.tags -}}
+    {{- $tagId := printf "tag:%s" $tag -}}
+    {{- $tags = merge $tags (dict $tagId $tag) -}}
+    {{- $links = $links | append (dict "source" $p.RelPermalink "target" $tagId) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- range $id, $title := $tags -}}
+  {{- $nodes = $nodes | append (dict "id" $id "title" $title "type" "keyword") -}}
+{{- end -}}
+
+{{- dict "nodes" $nodes "links" $links | jsonify -}}

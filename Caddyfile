@@ -1,0 +1,165 @@
+# =============================================================================
+# Master Caddy Configuration for faithconnect.us
+# =============================================================================
+
+{
+    email faithconnect2020@gmail.com
+    
+    servers {
+        protocols h1 h2 h2c h3
+    }
+}
+
+# Snippets
+(common_headers) {
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+}
+
+(standard_log) {
+    log {
+        output file /var/log/caddy/ { args[0] }.log {
+            roll_size 50MB
+            roll_keep 10
+            roll_keep_for 720h
+        }
+        format json
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Main Dashboard - faithconnect.us
+# -----------------------------------------------------------------------------
+faithconnect.us, www.faithconnect.us {
+    import common_headers
+    import standard_log dashboard
+
+    root * /var/www/dashboard
+    file_server
+}
+
+# -----------------------------------------------------------------------------
+# Command Center - cc.faithconnect.us
+# -----------------------------------------------------------------------------
+cc.faithconnect.us {
+    import common_headers
+    import standard_log cc
+
+    encode gzip zstd
+
+    handle /api/sync/* {
+        reverse_proxy cc-bookstack-sync:8080 {
+            fail_duration 10s
+            lb_try_duration 2s
+        }
+    }
+
+    handle /api/books* {
+        reverse_proxy cc-bookstack-sync:8080 {
+            fail_duration 10s
+            lb_try_duration 2s
+        }
+    }
+
+    handle /api/debug* {
+        reverse_proxy cc-bookstack-sync:8080 {
+            fail_duration 10s
+            lb_try_duration 2s
+        }
+    }
+
+    handle /api/* {
+        reverse_proxy commandcenter:3001 {
+            fail_duration 10s
+            lb_try_duration 2s
+        }
+    }
+
+    handle {
+        reverse_proxy commandcenter:5173 {
+            fail_duration 10s
+            lb_try_duration 2s
+        }
+    }
+
+    handle_errors {
+        @502 - 503 expression { err.status_code } in [502, 503]
+        handle @502-503 {
+            respond "🎛️ Command Center is currently starting or unavailable. Please try again in a moment." 503
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Read Faithfully - read.faithconnect.us
+# -----------------------------------------------------------------------------
+read.faithconnect.us {
+    import common_headers
+    import standard_log books
+
+    encode gzip zstd
+
+    reverse_proxy bookstack-app:80 {
+        header_up Host { host }
+        header_up X-Real-IP { remote_host }
+        fail_duration 10s
+        lb_try_duration 2s
+    }
+
+    handle_errors {
+        @502 - 503 expression { err.status_code } in [502, 503]
+        handle @502-503 {
+            respond "📚 Read Faithfully is currently starting or unavailable. Please try again in a moment." 503
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Listen Faithfully - listen.faithconnect.us
+# -----------------------------------------------------------------------------
+listen.faithconnect.us {
+    import common_headers
+    import standard_log listen
+
+    @notSocket not path /listenfaithfully/socket.io/*
+    encode @notSocket gzip zstd
+
+    reverse_proxy listenfaithfully-audiobookshelf:80 {
+        header_up Host { host }
+        header_up X-Real-IP { remote_host }
+        flush_interval -1
+        fail_duration 10s
+        lb_try_duration 2s
+    }
+
+    handle_errors {
+        @502 - 503 expression { err.status_code } in [502, 503]
+        handle @502-503 {
+            respond "🎧 Listen Faithfully is currently starting or unavailable. Please try again in a moment." 503
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Reformed Blog - blog.faithconnect.us
+# -----------------------------------------------------------------------------
+blog.faithconnect.us {
+    import common_headers
+    import standard_log blog
+
+    reverse_proxy reformed-blog:80 {
+        fail_duration 10s
+        lb_try_duration 2s
+    }
+
+    handle_errors {
+        @502 - 503 expression { err.status_code } in [502, 503]
+        handle @502-503 {
+            respond "📖 Reformed Blog is currently starting or unavailable. Please try again in a moment." 503
+        }
+    }
+}
