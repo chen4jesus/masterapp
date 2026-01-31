@@ -37,7 +37,15 @@ class BookApiController extends ApiController
             ->addSelect(['created_by', 'updated_by']);
 
         return $this->apiListingResponse($books, [
-            'id', 'name', 'slug', 'description', 'created_at', 'updated_at', 'created_by', 'updated_by', 'owned_by',
+            'id',
+            'name',
+            'slug',
+            'description',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'updated_by',
+            'owned_by',
         ]);
     }
 
@@ -131,10 +139,10 @@ class BookApiController extends ApiController
         $book = $this->queries->findVisibleByIdOrFail($id);
         $this->checkOwnablePermission('book-view', $book);
         $this->checkPermission('content-export');
-        
+
         try {
             $zipPath = $builder->buildForBook($book);
-            
+
             return response()->stream(
                 function () use ($zipPath) {
                     $stream = fopen($zipPath, 'rb');
@@ -149,10 +157,10 @@ class BookApiController extends ApiController
                 ]
             );
         } catch (\Exception $e) {
-            return $this->jsonError(['message' => 'Error exporting book: ' . $e->getMessage()]);
+            return $this->jsonError('Error exporting book: ' . $e->getMessage());
         }
     }
-    
+
     /**
      * Import a book from an uploaded ZIP file, bypassing the validation process.
      * This method accepts a raw ZIP file upload and imports it directly into the system.
@@ -163,36 +171,36 @@ class BookApiController extends ApiController
     public function unzipBook(Request $request, ZipImportRunner $importer, ImportRepo $importRepo)
     {
         $this->checkPermission('content-import');
-        
+
         $requestData = $this->validate($request, [
             'file' => ['required', 'file', 'mimes:zip'],
             'name' => ['sometimes', 'string', 'max:255'],
         ]);
-        
+
         try {
             // Store the uploaded file temporarily
             $uploadedFile = $request->file('file');
             $import = $importRepo->storeFromUpload($uploadedFile);
-            
+
             // Run the import without parent (top-level book)
             $entity = $importer->run($import, null);
-            
+
             // If a name was provided, update the imported book's name
             if (isset($requestData['name']) && $entity instanceof Book) {
                 $entity->name = $requestData['name'];
                 $entity->save();
             }
-            
+
             // Clean up the import
             $importRepo->deleteImport($import);
-            
+
             // Return the imported entity
             return response()->json([
                 'message' => 'Book imported successfully',
                 'entity' => $this->forJsonDisplay($entity),
             ]);
         } catch (\Exception $e) {
-            return $this->jsonError(['message' => 'Error importing book: ' . $e->getMessage()]);
+            return $this->jsonError('Error importing book: ' . $e->getMessage());
         }
     }
 
@@ -212,19 +220,19 @@ class BookApiController extends ApiController
     {
         return [
             'create' => [
-                'name'                => ['required', 'string', 'max:255'],
-                'description'         => ['string', 'max:1900'],
-                'description_html'    => ['string', 'max:2000'],
-                'tags'                => ['array'],
-                'image'               => array_merge(['nullable'], $this->getImageValidationRules()),
+                'name' => ['required', 'string', 'max:255'],
+                'description' => ['string', 'max:1900'],
+                'description_html' => ['string', 'max:2000'],
+                'tags' => ['array'],
+                'image' => array_merge(['nullable'], $this->getImageValidationRules()),
                 'default_template_id' => ['nullable', 'integer'],
             ],
             'update' => [
-                'name'                => ['string', 'min:1', 'max:255'],
-                'description'         => ['string', 'max:1900'],
-                'description_html'    => ['string', 'max:2000'],
-                'tags'                => ['array'],
-                'image'               => array_merge(['nullable'], $this->getImageValidationRules()),
+                'name' => ['string', 'min:1', 'max:255'],
+                'description' => ['string', 'max:1900'],
+                'description_html' => ['string', 'max:2000'],
+                'tags' => ['array'],
+                'image' => array_merge(['nullable'], $this->getImageValidationRules()),
                 'default_template_id' => ['nullable', 'integer'],
             ],
         ];
