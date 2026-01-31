@@ -22,7 +22,7 @@
 
 (standard_log) {
     log {
-        output file /var/log/caddy/ { args[0] }.log {
+        output file /var/log/caddy/{args[0]}.log {
             roll_size 50MB
             roll_keep 10
             roll_keep_for 720h
@@ -101,8 +101,8 @@ read.faithconnect.us {
     encode gzip zstd
 
     reverse_proxy bookstack-app:80 {
-        header_up Host { host }
-        header_up X-Real-IP { remote_host }
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
         fail_duration 10s
         lb_try_duration 2s
     }
@@ -123,8 +123,8 @@ listen.faithconnect.us {
     encode @notSocket gzip zstd
 
     reverse_proxy listenfaithfully-audiobookshelf:80 {
-        header_up Host { host }
-        header_up X-Real-IP { remote_host }
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
         flush_interval -1
         fail_duration 10s
         lb_try_duration 2s
