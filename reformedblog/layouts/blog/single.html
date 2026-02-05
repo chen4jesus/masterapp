@@ -133,19 +133,56 @@
       </div>
 
       <!-- Related posts -->
-      {{ $related := .Site.RegularPages.Related . | first 10 }}
-      {{ $related = $related | first 3 }}
-      {{ with $related }}
-        <div class="section pb-0">
-          <h2 class="h3 mb-12">
+      {{ $related_pages := slice }}
+      {{/* Older posts */}}
+      {{ with .PrevInSection }}
+        {{ $related_pages = $related_pages | append . }}
+        {{ with .PrevInSection }}
+          {{ $related_pages = $related_pages | append . }}
+          {{ with .PrevInSection }}
+            {{ $related_pages = $related_pages | append . }}
+          {{ end }}
+        {{ end }}
+      {{ end }}
+      {{/* Newer posts */}}
+      {{ with .NextInSection }}
+        {{ $related_pages = $related_pages | append . }}
+        {{ with .NextInSection }}
+          {{ $related_pages = $related_pages | append . }}
+          {{ with .NextInSection }}
+            {{ $related_pages = $related_pages | append . }}
+          {{ end }}
+        {{ end }}
+      {{ end }}
+
+      {{ with $related_pages }}
+        <div class="section pb-20">
+          <h2 class="h3 mb-12 text-center md:text-left">
             {{ T "related_posts" | default "Related Posts" }}
           </h2>
-          <div class="row">
-            {{ range . }}
-              <div class="lg:col-4 md:col-6 mb-14">
-                {{ partial "components/blog-card" . }}
+          <div class="relative px-4">
+            <div class="swiper related-posts-carousel !pb-16">
+              <div class="swiper-wrapper">
+                {{ range . }}
+                  <div class="swiper-slide h-auto">
+                    {{ partial "components/blog-card" . }}
+                  </div>
+                {{ end }}
               </div>
-            {{ end }}
+
+              <!-- Custom Navigation Arrows (Premium Look) -->
+              <div class="hidden md:flex justify-between absolute top-1/2 -translate-y-1/2 left-0 right-0 z-10 pointer-events-none">
+                <button class="swiper-button-prev-related w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-darkmode-light shadow-xl border border-border/20 text-primary dark:text-white hover:bg-primary hover:text-white transition-all transform -translate-x-6 pointer-events-auto">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button class="swiper-button-next-related w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-darkmode-light shadow-xl border border-border/20 text-primary dark:text-white hover:bg-primary hover:text-white transition-all transform translate-x-6 pointer-events-auto">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+
+              <!-- Pagination -->
+              <div class="swiper-pagination-related absolute bottom-0 left-0 right-0 flex justify-center gap-2"></div>
+            </div>
           </div>
         </div>
       {{ end }}
@@ -336,10 +373,58 @@
     html {
       scroll-behavior: smooth;
     }
+
+    /* Swiper Related Posts Custom Styles */
+    .swiper-pagination-related .swiper-pagination-bullet {
+      width: 8px;
+      height: 8px;
+      background: #CBD5E1;
+      opacity: 0.6;
+      transition: all 0.3s ease;
+      margin: 0 4px !important;
+    }
+    .swiper-pagination-related .swiper-pagination-bullet-active {
+      width: 20px;
+      border-radius: 4px;
+      background: var(--color-primary, #3b82f6);
+      opacity: 1;
+    }
+
+    .swiper-button-disabled {
+      opacity: 0.3 !important;
+      cursor: not-allowed !important;
+    }
   </style>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      // Related Posts Swiper Initialization
+      new Swiper(".related-posts-carousel", {
+        slidesPerView: 1,
+        spaceBetween: 24,
+        loop: true,
+        autoplay: {
+          delay: 5000,
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: ".swiper-pagination-related",
+          clickable: true,
+        },
+        navigation: {
+          nextEl: ".swiper-button-next-related",
+          prevEl: ".swiper-button-prev-related",
+        },
+        breakpoints: {
+          768: {
+            slidesPerView: 2,
+          },
+          1024: {
+            slidesPerView: 3,
+          },
+        },
+      });
+
       // Reading Progress Bar Logic
       const progressBar = document.getElementById("reading-progress-bar");
       const mobileProgressBar = document.getElementById(
