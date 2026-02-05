@@ -187,46 +187,46 @@
   };
 
   const renderPagination = (totalPages, allResults) => {
-    let paginationHtml = '<nav class="flex justify-center items-center gap-2 mt-8 flex-wrap">';
+    let paginationHtml = '<nav class="flex justify-center items-center gap-2.5 mt-12 flex-wrap">';
 
     // Previous button
     if (currentPage > 1) {
-      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-all duration-200" data-page="${currentPage - 1}"><i class="fa-solid fa-chevron-left text-sm"></i></button>`;
+      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl bg-[#f4f4f7] dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300" data-page="${currentPage - 1}"><i class="fa-solid fa-chevron-left text-xs"></i></button>`;
     }
 
     // Page numbers
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    const adjacentLinks = 2;
+    const pages = [];
+
+    // Logic: Always show First, Last, and a window around Current
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - adjacentLinks && i <= currentPage + adjacentLinks)) {
+            pages.push(i);
+        }
     }
 
-    if (startPage > 1) {
-      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-all duration-200 font-medium" data-page="1">1</button>`;
-      if (startPage > 2) paginationHtml += '<span class="flex items-center justify-center w-10 h-10 text-gray-400">...</span>';
-    }
+    let lastPrinted = 0;
+    pages.forEach(i => {
+      // Check for gap
+      if (i > lastPrinted + 1) {
+        paginationHtml += '<span class="flex items-center justify-center w-8 h-10 text-gray-400">...</span>';
+      }
 
-    for (let i = startPage; i <= endPage; i++) {
       const isActive = i === currentPage;
-      const activeClass = 'bg-black dark:bg-white text-white dark:text-black font-medium';
-      const inactiveClass = 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 font-medium';
+      const activeClass = 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm';
+      const inactiveClass = 'bg-[#f4f4f7] dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 font-bold';
 
-      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${isActive ? activeClass : inactiveClass}" data-page="${i}">${i}</button>`;
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) paginationHtml += '<span class="flex items-center justify-center w-10 h-10 text-gray-400">...</span>';
-      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-all duration-200 font-medium" data-page="${totalPages}">${totalPages}</button>`;
-    }
+      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${isActive ? activeClass : inactiveClass}" data-page="${i}">${i}</button>`;
+      lastPrinted = i;
+    });
 
     // Next button
     if (currentPage < totalPages) {
-      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-all duration-200" data-page="${currentPage + 1}"><i class="fa-solid fa-chevron-right text-sm"></i></button>`;
+      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl bg-[#f4f4f7] dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300" data-page="${currentPage + 1}"><i class="fa-solid fa-chevron-right text-xs"></i></button>`;
     }
 
     paginationHtml += '</nav>';
-    paginationHtml += `<p class="text-center mt-4 text-sm text-gray-400 dark:text-gray-500">共 ${allResults.length} 篇文章 • 第 ${currentPage} / ${totalPages} 页</p>`;
+    paginationHtml += `<p class="text-center mt-6 text-sm text-gray-400 font-medium">共 ${allResults.length} 篇文章 • 第 ${currentPage} / ${totalPages} 页</p>`;
 
     pagination.innerHTML = paginationHtml;
 
