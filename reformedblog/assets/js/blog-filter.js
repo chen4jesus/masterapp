@@ -191,7 +191,7 @@
 
     // Previous button
     if (currentPage > 1) {
-      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl bg-[#f4f4f7] dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300" data-page="${currentPage - 1}"><i class="fa-solid fa-chevron-left text-xs"></i></button>`;
+      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl bg-[#f4f4f7] dark:bg-white/5 text-black dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300" data-page="${currentPage - 1}"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>`;
     }
 
     // Page numbers
@@ -213,8 +213,8 @@
       }
 
       const isActive = i === currentPage;
-      const activeClass = 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm';
-      const inactiveClass = 'bg-[#f4f4f7] dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 font-bold';
+      const activeClass = 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-md';
+      const inactiveClass = 'bg-[#f4f4f7] dark:bg-white/5 text-black dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 font-bold';
 
       paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${isActive ? activeClass : inactiveClass}" data-page="${i}">${i}</button>`;
       lastPrinted = i;
@@ -222,11 +222,11 @@
 
     // Next button
     if (currentPage < totalPages) {
-      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl bg-[#f4f4f7] dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300" data-page="${currentPage + 1}"><i class="fa-solid fa-chevron-right text-xs"></i></button>`;
+      paginationHtml += `<button class="filter-page-btn flex items-center justify-center w-10 h-10 rounded-xl bg-[#f4f4f7] dark:bg-white/5 text-black dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-all duration-300" data-page="${currentPage + 1}"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>`;
     }
 
     paginationHtml += '</nav>';
-    paginationHtml += `<p class="text-center mt-6 text-sm text-gray-400 font-medium">共 ${allResults.length} 篇文章 • 第 ${currentPage} / ${totalPages} 页</p>`;
+    paginationHtml += `<p class="text-center mt-6 text-sm text-[#999] font-medium opacity-80 mb-10">共 ${allResults.length} 篇文章 • 第 ${currentPage} / ${totalPages} 页</p>`;
 
     pagination.innerHTML = paginationHtml;
 
