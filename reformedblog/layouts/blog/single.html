@@ -156,35 +156,39 @@
       {{ end }}
 
       {{ with $related_pages }}
-        <div class="section pb-20">
-          <h2 class="h3 mb-12 text-center md:text-left">
-            {{ T "related_posts" | default "Related Posts" }}
-          </h2>
-          <div class="relative px-4">
-            <div class="swiper related-posts-carousel !pb-16">
-              <div class="swiper-wrapper">
+        <section class="section pb-20">
+          <div class="row items-end justify-between mb-12">
+            <div class="md:col-8 text-center md:text-left">
+              <h2 class="h3">{{ T "related_posts" | default "Related Posts" }}</h2>
+            </div>
+          </div>
+
+          <div class="relative">
+            <!-- Custom Navigation (Visible on PC) -->
+            <div class="swiper-button-prev-related hidden lg:flex absolute top-1/2 -left-4 xl:-left-10 z-10 -translate-y-1/2 cursor-pointer w-12 h-12 rounded-full bg-white dark:bg-darkmode-light border border-border/50 dark:border-darkmode-border/50 items-center justify-center shadow-lg hover:bg-primary hover:text-white dark:hover:bg-primary dark:text-white transition-all duration-300 group">
+              <i class="fa-solid fa-chevron-left text-lg group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="swiper-button-next-related hidden lg:flex absolute top-1/2 -right-4 xl:-right-10 z-10 -translate-y-1/2 cursor-pointer w-12 h-12 rounded-full bg-white dark:bg-darkmode-light border border-border/50 dark:border-darkmode-border/50 items-center justify-center shadow-lg hover:bg-primary hover:text-white dark:hover:bg-primary dark:text-white transition-all duration-300 group">
+              <i class="fa-solid fa-chevron-right text-lg group-hover:scale-110 transition-transform"></i>
+            </div>
+
+            <!-- Swiper Slider -->
+            <div class="swiper related-posts-carousel overflow-hidden py-10 -my-10 px-1">
+              <div class="swiper-wrapper !h-auto">
                 {{ range . }}
-                  <div class="swiper-slide h-auto">
-                    {{ partial "components/blog-card" . }}
+                  <div class="swiper-slide !h-auto !flex">
+                    <div class="w-full h-full flex flex-col pb-12">
+                      {{ partial "components/blog-card" . }}
+                    </div>
                   </div>
                 {{ end }}
               </div>
 
-              <!-- Custom Navigation Arrows (Premium Look) -->
-              <div class="hidden md:flex justify-between absolute top-1/2 -translate-y-1/2 left-0 right-0 z-10 pointer-events-none">
-                <button class="swiper-button-prev-related w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-darkmode-light shadow-xl border border-border/20 text-primary dark:text-white hover:bg-primary hover:text-white transition-all transform -translate-x-6 pointer-events-auto">
-                  <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <button class="swiper-button-next-related w-12 h-12 flex items-center justify-center rounded-full bg-white dark:bg-darkmode-light shadow-xl border border-border/20 text-primary dark:text-white hover:bg-primary hover:text-white transition-all transform translate-x-6 pointer-events-auto">
-                  <i class="fa-solid fa-chevron-right"></i>
-                </button>
-              </div>
-
-              <!-- Pagination -->
-              <div class="swiper-pagination-related absolute bottom-0 left-0 right-0 flex justify-center gap-2"></div>
+              <!-- Pagination (Bars on Mobile, Dots on Desktop) -->
+              <div class="swiper-pagination-related !absolute !bottom-4 !left-0 !w-full flex justify-center lg:gap-3 gap-1 px-4 lg:px-0 z-10"></div>
             </div>
           </div>
-        </div>
+        </section>
       {{ end }}
     </div>
   </section>
@@ -374,53 +378,78 @@
       scroll-behavior: smooth;
     }
 
-    /* Swiper Related Posts Custom Styles */
-    .swiper-pagination-related .swiper-pagination-bullet {
-      width: 8px;
-      height: 8px;
-      background: #CBD5E1;
-      opacity: 0.6;
+    /* Matching Home Page Carousel Styles */
+    .related-posts-carousel .swiper-pagination-bullet {
+      background-color: var(--color-border, #e5e7eb) !important;
+      opacity: 0.5;
+      margin: 0 !important;
       transition: all 0.3s ease;
-      margin: 0 4px !important;
+      display: block;
     }
-    .swiper-pagination-related .swiper-pagination-bullet-active {
-      width: 20px;
-      border-radius: 4px;
-      background: var(--color-primary, #3b82f6);
+    .related-posts-carousel .swiper-pagination-bullet-active {
+      background-color: #000000 !important;
       opacity: 1;
+    }
+    .dark .related-posts-carousel .swiper-pagination-bullet {
+      background-color: rgba(255,255,255,0.2) !important;
+    }
+    .dark .related-posts-carousel .swiper-pagination-bullet-active {
+      background-color: #ffffff !important;
+    }
+
+    /* Mobile: Segmented Bars */
+    @media (max-width: 1023px) {
+      .related-posts-carousel .swiper-pagination-bullet {
+        width: auto;
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+      }
+    }
+
+    /* Desktop: Dots */
+    @media (min-width: 1024px) {
+      .related-posts-carousel .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .related-posts-carousel .swiper-pagination-bullet-active {
+        transform: scale(1.2);
+      }
     }
 
     .swiper-button-disabled {
-      opacity: 0.3 !important;
-      cursor: not-allowed !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
   </style>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      // Related Posts Swiper Initialization
       new Swiper(".related-posts-carousel", {
         slidesPerView: 1,
-        spaceBetween: 24,
-        loop: true,
-        autoplay: {
-          delay: 5000,
-          disableOnInteraction: false,
-        },
-        pagination: {
-          el: ".swiper-pagination-related",
-          clickable: true,
-        },
+        spaceBetween: 16,
+        loop: false,
+        grabCursor: true,
         navigation: {
           nextEl: ".swiper-button-next-related",
           prevEl: ".swiper-button-prev-related",
         },
+        pagination: {
+          el: ".swiper-pagination-related",
+          type: "bullets",
+          clickable: true,
+        },
         breakpoints: {
-          768: {
+          640: {
             slidesPerView: 2,
+            spaceBetween: 16,
           },
           1024: {
             slidesPerView: 3,
+            spaceBetween: 16,
           },
         },
       });
