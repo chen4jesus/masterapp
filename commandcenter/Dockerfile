@@ -8,6 +8,15 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# Install system dependencies
+RUN apk add --no-cache git curl unzip
+
+# Install Terraform manually (package removed from Alpine repos due to license change)
+RUN curl -fsSL https://releases.hashicorp.com/terraform/1.9.3/terraform_1.9.3_linux_amd64.zip -o terraform.zip && \
+    unzip terraform.zip && \
+    mv terraform /usr/local/bin/ && \
+    rm terraform.zip
+
 # Install dependencies
 RUN npm ci
 

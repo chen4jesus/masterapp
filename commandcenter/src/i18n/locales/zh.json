@@ -369,5 +369,87 @@
     "confirmPurge": "您确定要从目标站点删除所有书籍吗？此操作无法撤消。",
     "purgeSuccess": "目标站点已成功清空。",
     "errorPurge": "清空目标站点失败。"
+  },
+  "mirotalk": {
+    "title": "MiroTalk 视频会议",
+    "subtitle": "基于 MiroTalk P2P 的即时视频会议室",
+    "backToServices": "返回服务列表",
+    "createRoom": "创建会议室",
+    "noRooms": "暂无会议室",
+    "noRoomsPrompt": "点击“创建会议室”开始新的视频会议",
+    "status": {
+      "running": "运行中",
+      "provisioning": "配置中...",
+      "booting": "启动 MiroTalk...",
+      "destroying": "销毁中...",
+      "failed": "失败",
+      "destroyFailed": "销毁失败"
+    },
+    "room": {
+      "region": "区域",
+      "instanceType": "实例类型",
+      "ipAddress": "IP 地址",
+      "provisionedAt": "创建时间",
+      "activeRooms": "{{count}} 个活跃会议室",
+      "activeUsers": "{{count}} 个用户"
+    },
+    "actions": {
+      "joinMeeting": "加入会议",
+      "copy": "复制",
+      "copied": "已复制!",
+      "copyUrl": "复制链接",
+      "refresh": "刷新",
+      "destroy": "销毁"
+    },
+    "modal": {
+      "title": "创建会议室",
+      "subtitle": "配置您的新 MiroTalk 视频会议室",
+      "roomName": "会议室名称",
+      "roomNamePlaceholder": "例如：团队会议",
+      "serverRegion": "服务器区域",
+      "serverSize": "服务器大小",
+      "configTitle": "服务配置",
+      "linodeToken": "Linode API 令牌",
+      "linodeTokenPlaceholder": "您的 Linode API 令牌",
+      "apiSecret": "MiroTalk API 密钥",
+      "apiSecretPlaceholder": "自定义 API 密钥（可选）",
+      "saveConfig": "保存配置",
+      "saving": "保存中...",
+      "cancel": "取消",
+      "create": "创建会议室",
+      "creating": "创建中...",
+      "configureTokenFirst": "首先配置 Linode 令牌",
+      "tokenWarning": "⚠️ 展开上面的“服务配置”并添加您的 Linode API 令牌以启用会议室创建功能。"
+    },
+    "regions": {
+      "us-east": "美国东部 (纽瓦克)",
+      "us-west": "美国西部 (弗里蒙特)",
+      "us-central": "美国中部 (达拉斯)",
+      "us-southeast": "美国东南部 (亚特兰大)",
+      "eu-central": "欧洲中部 (法兰克福)",
+      "eu-west": "欧洲西部 (伦敦)",
+      "ap-south": "亚太地区 (新加坡)",
+      "ap-northeast": "亚太地区 (东京)"
+    },
+    "instanceTypes": {
+      "g6-nanode-1": "Nanode 1GB",
+      "g6-standard-1": "Linode 2GB",
+      "g6-standard-2": "Linode 4GB"
+    },
+    "stats": {
+      "totalRooms": "会议室总数",
+      "activeRooms": "活跃会议室",
+      "provisioning": "配置中"
+    },
+    "notifications": {
+      "urlCopied": "会议链接已复制到剪贴板！",
+      "configSaved": "配置保存成功！",
+      "configError": "保存配置失败",
+      "createError": "创建会议室失败",
+      "destroyError": "销毁会议室失败",
+      "confirmDestroy": "您确定要销毁此会议室吗？这将终止 VPS 实例。",
+      "loadError": "加载会议室失败",
+      "configLoadError": "加载配置失败"
+    }
   }
 }

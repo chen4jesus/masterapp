@@ -369,5 +369,87 @@
     "confirmPurge": "Are you sure you want to delete ALL books from the destination? This action cannot be undone.",
     "purgeSuccess": "Destination purged successfully.",
     "errorPurge": "Failed to purge destination."
+  },
+  "mirotalk": {
+    "title": "MiroTalk Video Conferencing",
+    "subtitle": "On-demand video meeting rooms powered by MiroTalk P2P",
+    "backToServices": "Back to Services",
+    "createRoom": "Create Room",
+    "noRooms": "No meeting rooms",
+    "noRoomsPrompt": "Click \"Create Room\" to start a new video meeting",
+    "status": {
+      "running": "Running",
+      "provisioning": "Provisioning...",
+      "booting": "Starting MiroTalk...",
+      "destroying": "Destroying...",
+      "failed": "Failed",
+      "destroyFailed": "Destroy Failed"
+    },
+    "room": {
+      "region": "Region",
+      "instanceType": "Instance Type",
+      "ipAddress": "IP Address",
+      "provisionedAt": "Provisioned At",
+      "activeRooms": "{{count}} active room(s)",
+      "activeUsers": "{{count}} user(s)"
+    },
+    "actions": {
+      "joinMeeting": "Join Meeting",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "copyUrl": "Copy URL",
+      "refresh": "Refresh",
+      "destroy": "Destroy"
+    },
+    "modal": {
+      "title": "Create Meeting Room",
+      "subtitle": "Configure your new MiroTalk video meeting room",
+      "roomName": "Room Name",
+      "roomNamePlaceholder": "e.g., Team Meeting",
+      "serverRegion": "Server Region",
+      "serverSize": "Server Size",
+      "configTitle": "Service Configuration",
+      "linodeToken": "Linode API Token",
+      "linodeTokenPlaceholder": "Your Linode API token",
+      "apiSecret": "MiroTalk API Secret",
+      "apiSecretPlaceholder": "Custom API secret (optional)",
+      "saveConfig": "Save Config",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "create": "Create Room",
+      "creating": "Creating...",
+      "configureTokenFirst": "Configure Linode Token First",
+      "tokenWarning": "⚠️ Expand \"Linode Configuration\" above and add your Linode API token to enable room creation."
+    },
+    "regions": {
+      "us-east": "US East (Newark)",
+      "us-west": "US West (Fremont)",
+      "us-central": "US Central (Dallas)",
+      "us-southeast": "US Southeast (Atlanta)",
+      "eu-central": "EU Central (Frankfurt)",
+      "eu-west": "EU West (London)",
+      "ap-south": "Asia Pacific (Singapore)",
+      "ap-northeast": "Asia Pacific (Tokyo)"
+    },
+    "instanceTypes": {
+      "g6-nanode-1": "Nanode 1GB",
+      "g6-standard-1": "Linode 2GB",
+      "g6-standard-2": "Linode 4GB"
+    },
+    "stats": {
+      "totalRooms": "Total Rooms",
+      "activeRooms": "Active Rooms",
+      "provisioning": "Provisioning"
+    },
+    "notifications": {
+      "urlCopied": "Meeting URL copied to clipboard!",
+      "configSaved": "Configuration saved successfully!",
+      "configError": "Failed to save configuration",
+      "createError": "Failed to create room",
+      "destroyError": "Failed to destroy room",
+      "confirmDestroy": "Are you sure you want to destroy this meeting room? This will terminate the VPS instance.",
+      "loadError": "Failed to load rooms",
+      "configLoadError": "Failed to load config"
+    }
   }
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { RefreshCw, Database, Cloud, Cog, ArrowRight, Globe } from 'lucide-react';
+import { RefreshCw, Database, Cloud, Cog, ArrowRight, Globe, Video } from 'lucide-react';
 
 const ServiceCard = ({ service }) => {
   const { t } = useTranslation();
@@ -172,6 +172,23 @@ const Services = () => {
   }, [t]);
 
   const staticServices = [
+    {
+      id: 'mirotalk',
+      name: 'MiroTalk Meetings',
+      description: 'On-demand video conferencing with auto-scaling Linode VPS. Rooms auto-destruct when empty.',
+      path: '/services/mirotalk',
+      icon: Video,
+      status: t('services.status.available'),
+      comingSoon: false,
+      gradient: 'linear-gradient(90deg, #10b981, #059669)',
+      glowColor: 'rgba(16, 185, 129, 0.15)',
+      borderColor: 'rgba(16, 185, 129, 0.3)',
+      iconBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1))',
+      iconBorder: 'rgba(16, 185, 129, 0.2)',
+      iconColor: '#10b981',
+      statusBg: 'rgba(16, 185, 129, 0.1)',
+      statusColor: '#10b981',
+    },
     {
       id: 'sync',
       name: t('services.items.sync.name'),

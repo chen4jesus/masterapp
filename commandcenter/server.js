@@ -222,6 +222,20 @@ app.post('/api/local/books/:bookId/config', (req, res) => {
     }
 });
 
+// --- MiroTalk Service ---
+// Import and setup MiroTalk routes for on-demand meeting room management
+import('./src/services/mirotalkService.js')
+    .then(({ setupMiroTalkRoutes }) => {
+        setupMiroTalkRoutes(app, {
+            linodeToken: process.env.LINODE_TOKEN,
+            apiKeySecret: process.env.MIROTALK_API_SECRET || 'mirotalkp2p_default_secret',
+            webhookBaseUrl: process.env.WEBHOOK_BASE_URL || `http://localhost:${PORT}`
+        });
+    })
+    .catch(err => {
+        console.warn('[MiroTalk] Service not loaded:', err.message);
+    });
+
 app.listen(PORT, () => {
     console.log(`Local configuration server running on http://localhost:${PORT}`);
 });

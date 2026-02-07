@@ -1,0 +1,5 @@
+{
+  "linodeToken": "3e0d515b4dc5df23132084b861cd78dbde6f8d9d20b5f855252f93c200bd1185",
+  "apiKeySecret": "mirotalkp2p_default_secret",
+  "webhookBaseUrl": "http://localhost:3001"
+}

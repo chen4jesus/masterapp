@@ -8,6 +8,7 @@ import SiteDetails from './pages/SiteDetails';
 import BookDetails from './pages/BookDetails';
 import PageDetails from './pages/PageDetails';
 import Services from './pages/Services';
+import MiroTalkService from './pages/MiroTalkService';
 import BookStackSync from './components/Sync/BookStackSync';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -33,6 +34,7 @@ function App() {
           <Route path="/websites/:slug/books/:bookSlug/pages/:pageId" element={<PageDetails />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/sync" element={<BookStackSync />} />
+          <Route path="/services/mirotalk" element={<MiroTalkService />} />
           <Route path="/monitoring" element={<PagePlaceholder titleKey="sidebar.monitoring" />} />
           <Route path="/settings" element={<PagePlaceholder titleKey="sidebar.settings" />} />
         </Route>
