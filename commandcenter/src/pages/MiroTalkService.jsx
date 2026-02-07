@@ -20,7 +20,7 @@ import {
   Activity
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = '';
 
 // Status badge component
 const StatusBadge = ({ status, t }) => {

@@ -805,17 +805,41 @@ export function setupMiroTalkRoutes(app, config = {}) {
         const room = state.rooms.find((r) => r.id === room_id);
 
         if (room && room.status === "running") {
-          // Start destruction process
-          const destroyRes = await fetch(
-            `http://localhost:3001/api/mirotalk/rooms/${room_id}`,
-            {
-              method: "DELETE",
-            },
-          );
-
-          if (destroyRes.ok) {
+          // Start destruction process directly (no self-referencing HTTP call)
+          effectiveConfig = getConfig();
+          
+          if (room.instanceId && effectiveConfig.linodeToken) {
+            // Update status to destroying
+            room.status = "destroying";
+            saveRoomsState(state);
+            
+            // Destroy the Linode instance directly
+            const result = await destroyLinodeInstance(room.instanceId, effectiveConfig.linodeToken);
+            
+            if (result.success) {
+              // Remove from state
+              const currentState = readRoomsState();
+              currentState.rooms = currentState.rooms.filter((r) => r.id !== room_id);
+              saveRoomsState(currentState);
+              console.log(
+                `[MiroTalk] Destruction completed for empty room ${room_id}`,
+              );
+            } else {
+              console.error(
+                `[MiroTalk] Failed to destroy empty room ${room_id}: ${result.error}`,
+              );
+              // Update status to failed
+              const currentState = readRoomsState();
+              const idx = currentState.rooms.findIndex((r) => r.id === room_id);
+              if (idx !== -1) {
+                currentState.rooms[idx].status = "destroy_failed";
+                currentState.rooms[idx].error = result.error;
+                saveRoomsState(currentState);
+              }
+            }
+          } else {
             console.log(
-              `[MiroTalk] Destruction initiated for empty room ${room_id}`,
+              `[MiroTalk] Cannot destroy room ${room_id}: missing instanceId or linodeToken`,
             );
           }
         }

@@ -11,6 +11,11 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      // MiroTalk service API
+      '/api/mirotalk': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
       // Spring Boot API for BookStack sync
       '/api/sync': {
         target: 'http://cc-bookstack-sync:8080',
