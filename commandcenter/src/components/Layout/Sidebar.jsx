@@ -38,7 +38,7 @@ const Sidebar = () => {
         }}>
           <Command size={18} color="white" />
         </div>
-        <span className="brand-text">CommandCenter</span>
+        <span className="brand-text">{t('sidebar.brand')}</span>
       </div>
 
       {/* Navigation */}
