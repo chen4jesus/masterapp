@@ -784,6 +784,58 @@ export function setupMiroTalkRoutes(app, config = {}) {
   });
 
   /**
+   * POST /api/mirotalk/cleanup
+   * Remove all failed rooms (and ensure their Linode instances are deleted)
+   */
+  app.post("/api/mirotalk/cleanup", async (req, res) => {
+    try {
+      const state = readRoomsState();
+      effectiveConfig = getConfig();
+      
+      const failedRooms = state.rooms.filter(r => 
+        r.status === 'failed' || r.status === 'destroy_failed'
+      );
+      
+      if (failedRooms.length === 0) {
+        return res.json({ success: true, count: 0, message: "No failed rooms to cleanup" });
+      }
+
+      console.log(`[MiroTalk] Cleaning up ${failedRooms.length} failed rooms...`);
+      
+      // Try to ensure Linode instances are destroyed for failed rooms if they exist
+      if (effectiveConfig.linodeToken) {
+        for (const room of failedRooms) {
+          if (room.instanceId) {
+            try {
+              console.log(`[MiroTalk] Ensuring instance ${room.instanceId} is destroyed for failed room ${room.id}`);
+              // We don't wait for independent failures to stop the process
+              await destroyLinodeInstance(room.instanceId, effectiveConfig.linodeToken);
+            } catch (err) {
+              console.warn(`[MiroTalk] Warning during instance cleanup for room ${room.id}:`, err);
+            }
+          }
+        }
+      }
+
+      // Remove from state
+      const newState = readRoomsState(); // Read again to be safe
+      newState.rooms = newState.rooms.filter(r => 
+        r.status !== 'failed' && r.status !== 'destroy_failed'
+      );
+      saveRoomsState(newState);
+
+      res.json({ 
+        success: true, 
+        count: failedRooms.length,
+        message: `Cleaned up ${failedRooms.length} failed rooms`
+      });
+    } catch (error) {
+      console.error("Error cleaning up rooms:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  /**
    * POST /api/mirotalk/webhook
    * Webhook endpoint for MiroTalk room events (e.g., when last attendee leaves)
    */

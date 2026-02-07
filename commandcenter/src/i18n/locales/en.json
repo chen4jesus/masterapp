@@ -399,7 +399,8 @@
       "copied": "Copied!",
       "copyUrl": "Copy URL",
       "refresh": "Refresh",
-      "destroy": "Destroy"
+      "destroy": "Destroy",
+      "cleanup": "Cleanup Failed"
     },
     "modal": {
       "title": "Create Meeting Room",
@@ -449,7 +450,10 @@
       "destroyError": "Failed to destroy room",
       "confirmDestroy": "Are you sure you want to destroy this meeting room? This will terminate the VPS instance.",
       "loadError": "Failed to load rooms",
-      "configLoadError": "Failed to load config"
+      "configLoadError": "Failed to load config",
+      "cleanupSuccess": "Successfully cleaned up {{count}} failed rooms",
+      "cleanupError": "Failed to cleanup rooms",
+      "noFailedRooms": "No failed rooms found to cleanup"
     }
   }
 }

@@ -399,7 +399,8 @@
       "copied": "已复制!",
       "copyUrl": "复制链接",
       "refresh": "刷新",
-      "destroy": "销毁"
+      "destroy": "销毁",
+      "cleanup": "清理无效房间"
     },
     "modal": {
       "title": "创建会议室",
@@ -449,7 +450,10 @@
       "destroyError": "销毁会议室失败",
       "confirmDestroy": "您确定要销毁此会议室吗？这将终止 VPS 实例。",
       "loadError": "加载会议室失败",
-      "configLoadError": "加载配置失败"
+      "configLoadError": "加载配置失败",
+      "cleanupSuccess": "成功清理 {{count}} 个失败房间",
+      "cleanupError": "清理失败",
+      "noFailedRooms": "未发现需要清理的失败房间"
     }
   }
 }

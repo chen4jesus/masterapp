@@ -662,6 +662,7 @@ const MiroTalkService = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [cleaningUp, setCleaningUp] = useState(false);
 
   // Fetch rooms
   const fetchRooms = useCallback(async () => {
@@ -779,6 +780,26 @@ const MiroTalkService = () => {
     }
   };
 
+  // Cleanup failed rooms
+  const handleCleanup = async () => {
+    try {
+      setCleaningUp(true);
+      const response = await fetch(`${API_BASE}/api/mirotalk/cleanup`, {
+        method: 'POST'
+      });
+      const data = await response.json();
+      if (data.success) {
+        await fetchRooms();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      setError(`${t('mirotalk.notifications.cleanupError')}: ${err.message}`);
+    } finally {
+      setCleaningUp(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -847,35 +868,60 @@ const MiroTalkService = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '14px 24px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #10b981, #059669)',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
-            transition: 'all 0.2s'
-          }}
-          onMouseOver={e => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 25px rgba(16, 185, 129, 0.4)';
-          }}
-          onMouseOut={e => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.3)';
-          }}
-        >
-          <Plus size={18} />
-          {t('mirotalk.createRoom')}
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={handleCleanup}
+            disabled={cleaningUp}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '14px 24px',
+              borderRadius: '14px',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: cleaningUp ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              opacity: cleaningUp ? 0.7 : 1
+            }}
+          >
+            {cleaningUp ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={18} />}
+            {t('mirotalk.actions.cleanup')}
+          </button>
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '14px 24px',
+              borderRadius: '14px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 25px rgba(16, 185, 129, 0.4)';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.3)';
+            }}
+          >
+            <Plus size={18} />
+            {t('mirotalk.createRoom')}
+          </button>
+        </div>
       </header>
 
       {/* Error alert */}
