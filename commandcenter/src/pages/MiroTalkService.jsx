@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { 
   Video, 
   Plus, 
@@ -17,7 +18,8 @@ import {
   RefreshCw,
   MapPin,
   Cpu,
-  Activity
+  Activity,
+  ArrowLeft
 } from 'lucide-react';
 
 const API_BASE = '';
@@ -827,6 +829,24 @@ const MiroTalkService = () => {
       </style>
 
       {/* Header */}
+      <Link 
+        to="/services" 
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '14px',
+          color: '#94a3b8',
+          textDecoration: 'none',
+          marginBottom: '20px',
+          transition: 'color 0.2s',
+        }}
+        onMouseOver={e => e.currentTarget.style.color = '#818cf8'}
+        onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
+      >
+        <ArrowLeft size={16} /> {t('mirotalk.backToServices')}
+      </Link>
+
       <header style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
