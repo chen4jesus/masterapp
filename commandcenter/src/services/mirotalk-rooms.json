@@ -1,18 +1,4 @@
 {
   "rooms": [
-    {
-      "id": "mtk-3edddbcf",
-      "name": "testmeet",
-      "status": "running",
-      "region": "us-east",
-      "instanceType": "g6-nanode-1",
-      "createdAt": "2026-02-07T21:17:48.086Z",
-      "hostProtected": false,
-      "meetingUrl": "https://45.56.102.241",
-      "apiUrl": "https://45.56.102.241/api/v1",
-      "instanceIp": "45.56.102.241",
-      "instanceId": 91277312,
-      "provisionedAt": "2026-02-07T21:19:55.707Z"
-    }
   ]
 }
