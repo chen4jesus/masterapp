@@ -77,10 +77,10 @@ const fetchWithSelfSigned = (urlString, options = {}) => {
  * Poll until the MiroTalk instance is ready and responding to API requests
  * @param {string} instanceIp - The IP address of the MiroTalk instance
  * @param {string} apiKeySecret - The API key secret for authentication
- * @param {number} maxAttempts - Maximum polling attempts (default: 30, ~5 minutes)
+ * @param {number} maxAttempts - Maximum polling attempts (default: 45, ~7.5 minutes)
  * @returns {Promise<{ready: boolean, error?: string}>}
  */
-const waitForMiroTalkReady = async (instanceIp, apiKeySecret, maxAttempts = 30) => {
+const waitForMiroTalkReady = async (instanceIp, apiKeySecret, maxAttempts = 45) => {
   const apiUrl = `https://${instanceIp}/api/v1/stats`;
   
   console.log(`[MiroTalk] Waiting for MiroTalk to be ready at ${instanceIp}...`);
@@ -160,18 +160,39 @@ const generateRoomId = () => {
   return `mtk-${uuidv4().slice(0, 8)}`;
 };
 /**
- * Generate the startup script (StackScript) that will install MiroTalk on the Linode instance
+ * Generate the startup script (StackScript) that will install MiroTalk SFU on the Linode instance
+ * Based on MiroTalk SFU v2.1.07 configuration requirements
  * Uses Nginx as a reverse proxy for HTTPS with self-signed SSL certificate
+ * Includes WebRTC port configuration for media streaming
  */
 const generateStartupScript = (roomId, apiKeySecret) => {
   return `#!/bin/bash
 set -e
 
-# Update system
+# Log function
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+log "Starting MiroTalk SFU installation for room ${roomId}..."
+
+# Update system and install dependencies
+log "Updating system packages..."
 apt-get update
-apt-get install -y docker.io docker-compose nginx openssl
+apt-get install -y docker.io docker-compose-v2 nginx openssl ufw
+
+# Configure firewall for WebRTC
+log "Configuring firewall for WebRTC ports..."
+ufw allow 22/tcp    # SSH
+ufw allow 80/tcp    # HTTP
+ufw allow 443/tcp   # HTTPS
+ufw allow 3010/tcp  # MiroTalk internal (if needed)
+ufw allow 40000:40100/tcp  # WebRTC RTP ports
+ufw allow 40000:40100/udp  # WebRTC RTP ports (UDP is critical for media)
+ufw --force enable
 
 # Start Docker
+log "Starting Docker service..."
 systemctl enable docker
 systemctl start docker
 
@@ -179,12 +200,16 @@ systemctl start docker
 mkdir -p /opt/mirotalk
 mkdir -p /etc/nginx/ssl
 
+# Get public IP for WebRTC announcements
+PUBLIC_IP=$(curl -s http://api.ipify.org || curl -s http://ifconfig.me/ip || hostname -I | awk '{print $1}')
+log "Detected public IP: $PUBLIC_IP"
+
 # Generate self-signed SSL certificate
-echo "Generating self-signed SSL certificate..."
+log "Generating self-signed SSL certificate..."
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \\
   -keyout /etc/nginx/ssl/key.pem \\
   -out /etc/nginx/ssl/cert.pem \\
-  -subj "/C=US/ST=State/L=City/O=MiroTalk/OU=Meeting/CN=mirotalk-${roomId}"
+  -subj "/C=US/ST=State/L=City/O=MiroTalk/OU=Meeting/CN=$PUBLIC_IP"
 
 # Set proper permissions
 chmod 600 /etc/nginx/ssl/key.pem
@@ -192,22 +217,77 @@ chmod 644 /etc/nginx/ssl/cert.pem
 
 cd /opt/mirotalk
 
-# Create docker-compose.yml for MiroTalk P2P (HTTP internally)
+# Create .env file for MiroTalk SFU v2.1.07
+log "Creating MiroTalk environment configuration..."
+cat > .env << ENVEOF
+# MiroTalk SFU Environment Configuration
+# Generated for room: ${roomId}
+
+# Core System Configuration
+NODE_ENV=production
+SFU_ANNOUNCED_IP=$PUBLIC_IP
+SFU_LISTEN_IP=0.0.0.0
+SFU_MIN_PORT=40000
+SFU_MAX_PORT=40100
+
+# Server Configuration
+SERVER_HOST_URL=https://$PUBLIC_IP
+SERVER_LISTEN_IP=0.0.0.0
+SERVER_LISTEN_PORT=3010
+TRUST_PROXY=true
+
+# API Configuration
+API_KEY_SECRET=${apiKeySecret}
+API_ALLOW_STATS=true
+API_ALLOW_MEETINGS=true
+API_ALLOW_MEETING=true
+API_ALLOW_JOIN=true
+
+# Security
+HOST_PROTECTED=false
+JWT_SECRET=$(openssl rand -hex 32)
+
+# UI Customization
+APP_NAME=MiroTalk Meeting - ${roomId}
+SHOW_POWERED_BY=true
+
+# Disable optional features for minimal deployment
+RECORDING_ENABLED=false
+RTMP_ENABLED=false
+CHATGPT_ENABLED=false
+SLACK_ENABLED=false
+DISCORD_ENABLED=false
+OIDC_ENABLED=false
+ENVEOF
+
+# Create docker-compose.yml for MiroTalk SFU with proper port configuration
+log "Creating docker-compose configuration..."
 cat > docker-compose.yml << 'DOCKEREOF'
-version: '3'
+version: '3.8'
 services:
-  mirotalk:
-    image: mirotalk/p2p:latest
-    container_name: mirotalk
+  mirotalksfu:
+    image: mirotalk/sfu:latest
+    container_name: mirotalksfu
+    hostname: mirotalksfu
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:3000:3000"
-    environment:
-      - API_KEY_SECRET=${apiKeySecret}
+    network_mode: host
+    env_file:
+      - .env
+    volumes:
+      - ./.env:/src/.env:ro
 DOCKEREOF
 
-# Create Nginx config for HTTPS reverse proxy
+# Create Nginx config for HTTPS reverse proxy (WebSocket-aware)
+log "Creating Nginx configuration..."
 cat > /etc/nginx/sites-available/mirotalk << 'NGINXEOF'
+# MiroTalk SFU Nginx Configuration
+# Handles HTTPS termination and WebSocket proxying
+
+upstream mirotalksfu {
+    server 127.0.0.1:3010;
+    keepalive 64;
+}
+
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
@@ -217,24 +297,46 @@ server {
     
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    
+    # Optimize for WebRTC signaling
+    client_max_body_size 100M;
+    proxy_connect_timeout 300;
+    proxy_send_timeout 300;
+    proxy_read_timeout 300;
     
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://mirotalksfu;
         proxy_http_version 1.1;
+        
+        # WebSocket support
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+        
+        # Preserve client information
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        
+        # Timeouts for long-lived connections
         proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+        
+        # Buffering settings
+        proxy_buffering off;
+        proxy_cache off;
     }
 }
 
 server {
     listen 80;
     listen [::]:80;
+    
+    # Redirect all HTTP to HTTPS
     return 301 https://$host$request_uri;
 }
 NGINXEOF
@@ -244,23 +346,39 @@ ln -sf /etc/nginx/sites-available/mirotalk /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 
 # Test and restart Nginx
+log "Testing and starting Nginx..."
 nginx -t
 systemctl enable nginx
 systemctl restart nginx
 
-# Start MiroTalk
-docker-compose up -d
+# Pull and start MiroTalk
+log "Pulling MiroTalk SFU Docker image..."
+docker pull mirotalk/sfu:latest
+
+log "Starting MiroTalk SFU container..."
+docker compose up -d
 
 # Wait for container to be ready
-sleep 15
+log "Waiting for MiroTalk to initialize..."
+sleep 30
 
 # Verify services are running
-echo "=== Docker containers ==="
-docker ps
-echo "=== Nginx status ==="
-systemctl status nginx --no-pager
+log "=== Verification ==="
+echo "Docker containers:"
+docker ps --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"
+echo ""
+echo "Nginx status:"
+systemctl status nginx --no-pager -l || true
+echo ""
+echo "Testing MiroTalk API..."
+curl -s -k -H "authorization: ${apiKeySecret}" https://127.0.0.1/api/v1/stats || echo "API not ready yet (may need more time)"
 
-echo "MiroTalk installation complete for room ${roomId} with HTTPS via Nginx"
+log "============================================"
+log "MiroTalk SFU installation complete!"
+log "Room ID: ${roomId}"
+log "Access URL: https://$PUBLIC_IP"
+log "API URL: https://$PUBLIC_IP/api/v1"
+log "============================================"
 `;
 };
 
@@ -403,7 +521,7 @@ export function setupMiroTalkRoutes(app, config = {}) {
     const saved = readSavedConfig();
     return {
       linodeToken: saved.linodeToken || config.linodeToken || process.env.LINODE_TOKEN,
-      apiKeySecret: saved.apiKeySecret || config.apiKeySecret || process.env.MIROTALK_API_SECRET || "mirotalkp2p_default_secret",
+      apiKeySecret: saved.apiKeySecret || config.apiKeySecret || process.env.MIROTALK_API_SECRET || "mirotalksfu_default_secret",
     };
   };
 
@@ -411,14 +529,50 @@ export function setupMiroTalkRoutes(app, config = {}) {
 
   /**
    * GET /api/mirotalk/rooms
-   * List all meeting rooms
+   * List all meeting rooms with live stats from running instances
    */
   app.get("/api/mirotalk/rooms", async (req, res) => {
     try {
       const state = readRoomsState();
+      effectiveConfig = getConfig();
+      
+      // Fetch live stats for all running rooms in parallel
+      const roomsWithStats = await Promise.all(
+        state.rooms.map(async (room) => {
+          // Only fetch stats for running rooms with an API URL
+          if (room.status === "running" && room.apiUrl) {
+            try {
+              const statsUrl = `${room.apiUrl}/stats`;
+              console.log(`[MiroTalk] Fetching stats for room ${room.id} from ${statsUrl}`);
+              
+              const result = await fetchWithSelfSigned(statsUrl, {
+                method: 'GET',
+                headers: {
+                  'authorization': effectiveConfig.apiKeySecret,
+                  'Content-Type': 'application/json'
+                },
+                timeout: 5000  // Shorter timeout for list view
+              });
+              
+              if (result.ok) {
+                console.log(`[MiroTalk] Stats for room ${room.id}:`, result.data);
+                return { ...room, liveStats: result.data };
+              } else {
+                console.log(`[MiroTalk] Failed to get stats for room ${room.id}: ${result.error || result.status}`);
+                return { ...room, liveStats: null };
+              }
+            } catch (err) {
+              console.log(`[MiroTalk] Error fetching stats for room ${room.id}: ${err.message}`);
+              return { ...room, liveStats: null };
+            }
+          }
+          return room;
+        })
+      );
+      
       res.json({
         success: true,
-        rooms: state.rooms,
+        rooms: roomsWithStats,
       });
     } catch (error) {
       console.error("Error listing rooms:", error);
@@ -601,8 +755,8 @@ export function setupMiroTalkRoutes(app, config = {}) {
 
           console.log(`[MiroTalk] Linode instance ${instanceId} is booted, waiting for MiroTalk to start...`);
 
-          // Wait for MiroTalk to be actually ready
-          const miroTalkReady = await waitForMiroTalkReady(instanceIp, effectiveConfig.apiKeySecret, 30);
+          // Wait for MiroTalk to be actually ready (45 attempts × 10s = ~7.5 minutes for comprehensive setup)
+          const miroTalkReady = await waitForMiroTalkReady(instanceIp, effectiveConfig.apiKeySecret, 45);
           
           if (!miroTalkReady.ready) {
             throw new Error(miroTalkReady.error || 'MiroTalk did not become ready');
@@ -831,75 +985,6 @@ export function setupMiroTalkRoutes(app, config = {}) {
       });
     } catch (error) {
       console.error("Error cleaning up rooms:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  /**
-   * POST /api/mirotalk/webhook
-   * Webhook endpoint for MiroTalk room events (e.g., when last attendee leaves)
-   */
-  app.post("/api/mirotalk/webhook", async (req, res) => {
-    try {
-      const { event, room_id } = req.body;
-
-      console.log(
-        `[MiroTalk Webhook] Received event: ${event} for room: ${room_id}`,
-      );
-
-      if (event === "room_empty") {
-        // Room is empty, trigger destruction
-        console.log(
-          `[MiroTalk] Room ${room_id} is empty. Scheduling destruction...`,
-        );
-
-        const state = readRoomsState();
-        const room = state.rooms.find((r) => r.id === room_id);
-
-        if (room && room.status === "running") {
-          // Start destruction process directly (no self-referencing HTTP call)
-          effectiveConfig = getConfig();
-          
-          if (room.instanceId && effectiveConfig.linodeToken) {
-            // Update status to destroying
-            room.status = "destroying";
-            saveRoomsState(state);
-            
-            // Destroy the Linode instance directly
-            const result = await destroyLinodeInstance(room.instanceId, effectiveConfig.linodeToken);
-            
-            if (result.success) {
-              // Remove from state
-              const currentState = readRoomsState();
-              currentState.rooms = currentState.rooms.filter((r) => r.id !== room_id);
-              saveRoomsState(currentState);
-              console.log(
-                `[MiroTalk] Destruction completed for empty room ${room_id}`,
-              );
-            } else {
-              console.error(
-                `[MiroTalk] Failed to destroy empty room ${room_id}: ${result.error}`,
-              );
-              // Update status to failed
-              const currentState = readRoomsState();
-              const idx = currentState.rooms.findIndex((r) => r.id === room_id);
-              if (idx !== -1) {
-                currentState.rooms[idx].status = "destroy_failed";
-                currentState.rooms[idx].error = result.error;
-                saveRoomsState(currentState);
-              }
-            }
-          } else {
-            console.log(
-              `[MiroTalk] Cannot destroy room ${room_id}: missing instanceId or linodeToken`,
-            );
-          }
-        }
-      }
-
-      res.json({ success: true, received: true });
-    } catch (error) {
-      console.error("Error processing webhook:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });

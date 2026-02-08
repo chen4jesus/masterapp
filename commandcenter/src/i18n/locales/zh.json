@@ -372,7 +372,7 @@
   },
   "mirotalk": {
     "title": "MiroTalk 视频会议",
-    "subtitle": "基于 MiroTalk P2P 的即时视频会议室",
+    "subtitle": "基于 MiroTalk SFU 的即时视频会议室",
     "backToServices": "返回服务列表",
     "createRoom": "创建会议室",
     "noRooms": "暂无会议室",

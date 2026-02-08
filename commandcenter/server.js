@@ -228,8 +228,7 @@ import('./src/services/mirotalkService.js')
     .then(({ setupMiroTalkRoutes }) => {
         setupMiroTalkRoutes(app, {
             linodeToken: process.env.LINODE_TOKEN,
-            apiKeySecret: process.env.MIROTALK_API_SECRET || 'mirotalkp2p_default_secret',
-            webhookBaseUrl: process.env.WEBHOOK_BASE_URL || `http://localhost:${PORT}`
+            apiKeySecret: process.env.MIROTALK_API_SECRET || 'mirotalksfu_default_secret'
         });
     })
     .catch(err => {

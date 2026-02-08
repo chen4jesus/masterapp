@@ -170,7 +170,7 @@ const RoomCard = ({ room, onDestroy, onRefresh, t }) => {
         <Activity size={16} style={{ color: '#818cf8' }} />
         <span style={{ fontSize: '13px', color: '#94a3b8' }}>
           <strong style={{ color: 'var(--text-primary)' }}>{t('mirotalk.room.activeRooms', { count: room.liveStats?.totalRooms || 0 })}</strong>, 
-          <strong style={{ color: 'var(--text-primary)', marginLeft: '4px' }}>{t('mirotalk.room.activeUsers', { count: room.liveStats?.totalPeers || 0 })}</strong>
+          <strong style={{ color: 'var(--text-primary)', marginLeft: '4px' }}>{t('mirotalk.room.activeUsers', { count: room.liveStats?.totalUsers || 0 })}</strong>
         </span>
       </div>
 
