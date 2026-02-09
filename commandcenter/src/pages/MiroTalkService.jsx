@@ -429,7 +429,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreate, config, onSaveConfig, t })
                   }}
                 />
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', margin: '4px 0 0 0' }}>
-                  Get your token from <a href="https://cloud.linode.com/profile/tokens" target="_blank" rel="noreferrer" style={{ color: '#818cf8' }}>cloud.linode.com/profile/tokens</a>
+                  {t('mirotalk.modal.linodeTokenDescription')} <a href="https://cloud.linode.com/profile/tokens" target="_blank" rel="noreferrer" style={{ color: '#818cf8' }}>cloud.linode.com/profile/tokens</a>
                 </p>
               </div>
 
@@ -500,13 +500,13 @@ const CreateRoomModal = ({ isOpen, onClose, onCreate, config, onSaveConfig, t })
         {/* Room name */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-            {t('mirotalk.modal.roomName')}
+            {t('mirotalk.modal.serverName')}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={t('mirotalk.modal.roomNamePlaceholder')}
+            placeholder={t('mirotalk.modal.serverNamePlaceholder')}
             style={{
               width: '100%',
               padding: '12px 16px',
@@ -939,7 +939,7 @@ const MiroTalkService = () => {
             }}
           >
             <Plus size={18} />
-            {t('mirotalk.createRoom')}
+            {t('mirotalk.createServer')}
           </button>
         </div>
       </header>
@@ -990,7 +990,7 @@ const MiroTalkService = () => {
           <div style={{ fontSize: '28px', fontWeight: '700', color: '#818cf8' }}>
             {rooms.length}
           </div>
-          <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>{t('mirotalk.stats.totalRooms')}</div>
+          <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>{t('mirotalk.stats.totalServers')}</div>
         </div>
         <div style={{
           padding: '20px 24px',
@@ -1001,7 +1001,7 @@ const MiroTalkService = () => {
           <div style={{ fontSize: '28px', fontWeight: '700', color: '#10b981' }}>
             {rooms.filter(r => r.status === 'running').length}
           </div>
-          <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>{t('mirotalk.stats.activeRooms')}</div>
+          <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>{t('mirotalk.stats.activeServers')}</div>
         </div>
         <div style={{
           padding: '20px 24px',
@@ -1027,10 +1027,10 @@ const MiroTalkService = () => {
         }}>
           <Video size={48} style={{ color: '#475569', marginBottom: '16px' }} />
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
-            {t('mirotalk.noRooms')}
+            {t('mirotalk.noServers')}
           </h3>
           <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            {t('mirotalk.noRoomsPrompt')}
+            {t('mirotalk.noServersPrompt')}
           </p>
         </div>
       ) : (

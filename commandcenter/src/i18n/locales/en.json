@@ -371,12 +371,12 @@
     "errorPurge": "Failed to purge destination."
   },
   "mirotalk": {
-    "title": "MiroTalk Video Conferencing",
-    "subtitle": "On-demand video meeting rooms powered by MiroTalk SFU",
+    "title": "MiroTalk Meeting Platform",
+    "subtitle": "On-demand meeting platform powered by MiroTalk SFU",
     "backToServices": "Back to Services",
-    "createRoom": "Create Room",
-    "noRooms": "No meeting rooms",
-    "noRoomsPrompt": "Click \"Create Room\" to start a new video meeting",
+    "createServer": "Create Server",
+    "noServers": "No servers",
+    "noServersPrompt": "Click \"Create Server\" to start a new meeting server",
     "status": {
       "running": "Running",
       "provisioning": "Provisioning...",
@@ -403,10 +403,11 @@
       "cleanup": "Cleanup Failed"
     },
     "modal": {
-      "title": "Create Meeting Room",
-      "subtitle": "Configure your new MiroTalk video meeting room",
-      "roomName": "Room Name",
-      "roomNamePlaceholder": "e.g., Team Meeting",
+      "title": "Create Server",
+      "subtitle": "Configure your new MiroTalk server",
+      "serverName": "Server Name",
+      "serverNamePlaceholder": "e.g., Temporary Server",
+      "linodeTokenDescription": "Get your token from",
       "serverRegion": "Server Region",
       "serverSize": "Server Size",
       "configTitle": "Service Configuration",
@@ -417,7 +418,7 @@
       "saveConfig": "Save Config",
       "saving": "Saving...",
       "cancel": "Cancel",
-      "create": "Create Room",
+      "create": "Create Server",
       "creating": "Creating...",
       "configureTokenFirst": "Configure Linode Token First",
       "tokenWarning": "⚠️ Expand \"Linode Configuration\" above and add your Linode API token to enable room creation."
@@ -438,22 +439,26 @@
       "g6-standard-2": "Linode 4GB"
     },
     "stats": {
+      "totalServers": "Total Servers",
+      "activeServers": "Available Servers",
+      "provisioning": "Provisioning",
+      "destroying": "Destroying",
+      "failed": "Failed",
       "totalRooms": "Total Rooms",
-      "activeRooms": "Active Rooms",
-      "provisioning": "Provisioning"
+      "activeRooms": "Active Rooms"
     },
-    "notifications": {
+      "notifications": {
       "urlCopied": "Meeting URL copied to clipboard!",
       "configSaved": "Configuration saved successfully!",
       "configError": "Failed to save configuration",
-      "createError": "Failed to create room",
-      "destroyError": "Failed to destroy room",
-      "confirmDestroy": "Are you sure you want to destroy this meeting room? This will terminate the VPS instance.",
-      "loadError": "Failed to load rooms",
+      "createError": "Failed to create server",
+      "destroyError": "Failed to destroy server",
+      "confirmDestroy": "Are you sure you want to destroy this meeting server? This will terminate the VPS instance.",
+      "loadError": "Failed to load servers",
       "configLoadError": "Failed to load config",
-      "cleanupSuccess": "Successfully cleaned up {{count}} failed rooms",
-      "cleanupError": "Failed to cleanup rooms",
-      "noFailedRooms": "No failed rooms found to cleanup"
+      "cleanupSuccess": "Successfully cleaned up {{count}} failed servers",
+      "cleanupError": "Failed to cleanup servers",
+      "noFailedRooms": "No failed servers found to cleanup"
     }
   }
 }

@@ -174,8 +174,8 @@ const Services = () => {
   const staticServices = [
     {
       id: 'mirotalk',
-      name: 'MiroTalk Meetings',
-      description: 'On-demand video conferencing with auto-scaling Linode VPS. Rooms auto-destruct when empty.',
+      name: t('mirotalk.title'),
+      description: t('mirotalk.subtitle'),
       path: '/services/mirotalk',
       icon: Video,
       status: t('services.status.available'),

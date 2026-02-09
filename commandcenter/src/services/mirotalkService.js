@@ -688,7 +688,7 @@ export function setupMiroTalkRoutes(app, config = {}) {
       // Create room record
       const room = {
         id: roomId,
-        name: name || `Meeting Room ${roomId}`,
+        name: name || `Meeting Server ${roomId}`,
         status: "provisioning",
         region,
         instanceType,
