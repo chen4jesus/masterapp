@@ -212,8 +212,8 @@
 
   .device__body {
     grid-template-columns: 1fr;
-    /* Grille shrunk from 38vh → 24vh so the controls panel always fits */
-    grid-template-rows: minmax(160px, 24vh) auto;
+    /* Grille shrunk from 38vh → 35vh so the controls panel always fits */
+    grid-template-rows: minmax(160px, 35vh) auto;
     gap: 10px;
   }
 
