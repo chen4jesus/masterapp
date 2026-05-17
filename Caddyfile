@@ -23,18 +23,22 @@
 
 # CORS for external browser clients (bible_spa, mobile apps, etc.)
 # Applied only to the LF API and public routes — not the full UI.
+# Uses origin reflection instead of * because ABS sets Allow-Credentials: true,
+# and the CORS spec forbids * when credentials are present.
 (cors_api) {
     @cors_preflight method OPTIONS
     handle @cors_preflight {
-        header Access-Control-Allow-Origin "*"
+        header Access-Control-Allow-Origin "{http.request.header.Origin}"
         header Access-Control-Allow-Methods "GET, POST, OPTIONS"
         header Access-Control-Allow-Headers "Authorization, Content-Type"
+        header Access-Control-Allow-Credentials "true"
         header Access-Control-Max-Age "3600"
         respond 204
     }
-    header Access-Control-Allow-Origin "*"
+    header Access-Control-Allow-Origin "{http.request.header.Origin}"
     header Access-Control-Allow-Methods "GET, POST, OPTIONS"
     header Access-Control-Allow-Headers "Authorization, Content-Type"
+    header Access-Control-Allow-Credentials "true"
 }
 
 (standard_log) {
@@ -162,6 +166,18 @@ listen.faithconnect.us {
         }
     }
 
+    # Static audio file paths (ABS streams audio via /s/ for direct file access)
+    handle /listenfaithfully/s/* {
+        import cors_api
+        reverse_proxy listenfaithfully-audiobookshelf:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            flush_interval -1
+            fail_duration 10s
+            lb_try_duration 2s
+        }
+    }
+
     # All other paths (UI, socket.io, etc.) - no CORS needed
     handle {
         reverse_proxy listenfaithfully-audiobookshelf:80 {
@@ -177,6 +193,7 @@ listen.faithconnect.us {
         respond "🎧 Listen Faithfully is currently starting or unavailable. Please try again in a moment." 503
     }
 }
+
 
 # -----------------------------------------------------------------------------
 # Reformed Blog - blog.faithconnect.us
