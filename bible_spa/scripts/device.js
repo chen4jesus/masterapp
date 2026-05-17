@@ -331,7 +331,7 @@ export class Device {
    */
   async _refreshIdle() {
     this.display.setEntry(false);
-    this.display.setLabel("READY");
+    this.display.setLabel("就绪");
 
     // Playlist mode: show track name with optional scroll
     if (typeof this.source.getTrackName === "function" && this.source.isBibleMode === false) {
@@ -354,7 +354,7 @@ export class Device {
     this.display.setEntry(false);
     const book = getBookById(this.book);
     this.display.setMain(`${book.abbr} ${pad(this.chapter, 3)}`);
-    this.display.setLabel("READY");
+    this.display.setLabel("就绪");
     this._syncDebug();
   }
 
