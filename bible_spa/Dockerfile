@@ -3,9 +3,11 @@ FROM caddy:2-alpine
 # Copy all static assets into the Caddy serve root
 COPY . /srv
 
-# Overlay the production config so the container always uses the live API URL.
-# To customise at runtime, bind-mount your own config.json over /srv/config.json.
-RUN cp /srv/config.production.json /srv/config.json
+# Overlay production config if it exists alongside the source.
+# In practice the config is injected at *runtime* via a volume mount
+# (see docker-compose.app.yml), so this is just a build-time convenience
+# for cases where the file was included in the build context.
+RUN [ -f /srv/config.production.json ] && cp /srv/config.production.json /srv/config.json || true
 
 # Inline Caddyfile: serve /srv as a static site on port 80
 # gzip/zstd encoding, no-cache for config.json so updates are picked up

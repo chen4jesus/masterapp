@@ -20,10 +20,10 @@ services:
     expose:
       - "80"
 
-    # Optional: override config at runtime without rebuilding the image.
-    # Uncomment and point to a local config file if needed:
-    # volumes:
-    #   - ./config.production.json:/srv/config.json:ro
+    # Inject production config at runtime — keeps secrets off the image layer.
+    # Create config.production.json on the host before running docker compose up.
+    volumes:
+      - ./config.production.json:/srv/config.json:ro
 
     networks:
       - faithconnect
