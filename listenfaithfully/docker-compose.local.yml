@@ -11,6 +11,7 @@ services:
     container_name: listenfaithfully-audiobookshelf
     environment:
       - ROUTER_BASE_PATH=/listenfaithfully
+      - ALLOW_CORS=1
     volumes:
       - listenfaithfully_audiobooks:/audiobooks
       - listenfaithfully_podcasts:/podcasts
