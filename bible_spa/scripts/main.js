@@ -21,10 +21,12 @@ async function boot() {
   const source = createSource(config.source);
 
   const display = new Display(
-    $("[data-lcd]"),
-    $("[data-key='book']"),
-    $("[data-key='chapter']"),
+    $('[data-lcd]'),
+    $('[data-key=\'book\']'),
+    $('[data-key=\'chapter\']'),
+    $('.top-indicator'),
   );
+
   const player  = new Player($("[data-audio]"));
 
   const debugEl = $("[data-debug]");

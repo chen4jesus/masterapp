@@ -77,6 +77,16 @@
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #ffd17a, #b75d04 70%);
   box-shadow: 0 0 8px rgba(255,160,40,0.6), inset 0 0 2px rgba(0,0,0,0.5);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+.top-indicator.indicator--playing {
+  background: radial-gradient(circle at 30% 30%, #7fffb0, #18a84a 70%);
+  box-shadow: 0 0 10px rgba(40,220,100,0.8), inset 0 0 2px rgba(0,0,0,0.4);
+  animation: indicator-pulse 1.6s ease-in-out infinite;
+}
+@keyframes indicator-pulse {
+  0%, 100% { box-shadow: 0 0 8px  rgba(40,220,100,0.7), inset 0 0 2px rgba(0,0,0,0.4); }
+  50%       { box-shadow: 0 0 16px rgba(40,220,100,1.0), inset 0 0 2px rgba(0,0,0,0.4); }
 }
 
 /* Inner body split into two panels */

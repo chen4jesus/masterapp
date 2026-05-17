@@ -6,15 +6,17 @@ export class Display {
    * @param {Element} root        The [data-lcd] element.
    * @param {Element} bookBtn     The 书卷 button ([data-key="book"]).
    * @param {Element} chapterBtn  The 章节 button ([data-key="chapter"]).
+   * @param {Element} [indicator] The top-right power indicator dot.
    */
-  constructor(root, bookBtn, chapterBtn) {
+  constructor(root, bookBtn, chapterBtn, indicator = null) {
     this.root       = root;
-    this.elPlay     = root.querySelector("[data-lcd-play]");
-    this.elMode     = root.querySelector("[data-lcd-mode]");
-    this.elMain     = root.querySelector("[data-lcd-main]");
-    this.elLabel    = root.querySelector("[data-lcd-label]");
+    this.elPlay     = root.querySelector('[data-lcd-play]');
+    this.elMode     = root.querySelector('[data-lcd-mode]');
+    this.elMain     = root.querySelector('[data-lcd-main]');
+    this.elLabel    = root.querySelector('[data-lcd-label]');
     this._bookBtn   = bookBtn;
     this._chapBtn   = chapterBtn;
+    this._indicator = indicator;
     this._confirmEl = null;   // whichever button is currently in hint state
   }
 
@@ -23,7 +25,10 @@ export class Display {
   }
 
   setPlaying(playing) {
-    this.root.dataset.playing = playing ? "true" : "false";
+    this.root.dataset.playing = playing ? 'true' : 'false';
+    if (this._indicator) {
+      this._indicator.classList.toggle('indicator--playing', playing);
+    }
   }
 
   setMode(text) {
