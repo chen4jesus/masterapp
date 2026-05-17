@@ -194,39 +194,48 @@
  * into a stacked column: grille (with cross) on top, controls below.
  * This matches the form factor of portrait talking-Bible variants. */
 @media (max-width: 720px), (orientation: portrait) and (max-width: 900px) {
-  .stage { padding: 12px; align-items: flex-start; padding-top: max(12px, env(safe-area-inset-top)); }
+  .stage {
+    padding: 6px;
+    padding-top: max(6px, env(safe-area-inset-top));
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    align-items: flex-start;
+    /* Safety net: if content still overflows, allow scrolling */
+    overflow-y: auto;
+  }
 
   .device {
     width: min(96vw, 460px);
     aspect-ratio: auto;
-    padding: 16px;
-    border-radius: 26px;
+    padding: 11px;
+    border-radius: 22px;
   }
 
   .device__body {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(220px, 38vh) auto;
-    gap: 14px;
+    /* Grille shrunk from 38vh → 24vh so the controls panel always fits */
+    grid-template-rows: minmax(160px, 24vh) auto;
+    gap: 10px;
   }
 
-  /* Lift the grid step on mobile; both the grille pattern AND the cross's
-   * bar thickness (3 * --grid) follow automatically because they share
-   * the variable on .panel--grille. */
-  .panel--grille { min-height: 220px; --grid: 16px; }
+  .panel--grille { min-height: 160px; --grid: 14px; }
 
-  .grille  { inset: 12px; }
-  .cross   { inset: 12px; }
+  .grille  { inset: 10px; }
+  .cross   { inset: 10px; }
 
-  .panel--controls { gap: 10px; padding: 0; }
+  .panel--controls { gap: 8px; padding: 0; }
 
-  .device__top { padding: 0 28%; }
+  .device__top  { padding: 0 28%; }
   .device__feet { left: 20%; right: 20%; }
 }
 
-/* Very small phones */
-@media (max-width: 380px) {
-  .device { padding: 14px; }
+/* Very compact phones (iPhone SE, Galaxy A-series ≤ 667 px tall) */
+@media (max-height: 667px) and (orientation: portrait) {
+  .device__body { grid-template-rows: minmax(130px, 20vh) auto; gap: 8px; }
+  .panel--grille { min-height: 130px; --grid: 13px; }
+  .device { padding: 9px; }
+  .panel--controls { gap: 6px; }
 }
+
 
 /* Debug strip */
 .debug {
