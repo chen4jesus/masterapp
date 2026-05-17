@@ -146,3 +146,25 @@ http://:8004 {
         }
     }
 }
+
+# -----------------------------------------------------------------------------
+# 5. Bible SPA - localhost:8005
+# -----------------------------------------------------------------------------
+http://:8005 {
+    import common_headers
+    import standard_log
+
+    encode gzip zstd
+
+    reverse_proxy bible-spa:80 {
+        fail_duration 10s
+        lb_try_duration 2s
+    }
+
+    handle_errors {
+        @502-503 expression {err.status_code} in [502, 503]
+        handle @502-503 {
+            respond "📖 Bible SPA is starting..." 503
+        }
+    }
+}

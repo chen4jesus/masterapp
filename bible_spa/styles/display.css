@@ -1,0 +1,116 @@
+/* LCD display ------------------------------------------------------------- */
+.lcd {
+  --lcd-bg: #0c0f12;
+  --lcd-glow: #ff6a1f;
+  --lcd-dim: rgba(255, 106, 31, 0.18);
+
+  position: relative;
+  height: 88px;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, #1a1d22 0%, #0a0c10 100%);
+  box-shadow:
+    inset 0 0 0 1px #000,
+    inset 0 2px 0 rgba(255,255,255,0.05),
+    inset 0 -2px 6px rgba(0,0,0,0.6),
+    0 1px 0 rgba(255,255,255,0.06);
+  overflow: hidden;
+  padding: 8px 12px;
+}
+
+.lcd__inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  color: var(--lcd-glow);
+  text-shadow: 0 0 6px rgba(255,106,31,0.65);
+  font-family: "Share Tech Mono", "VT323", ui-monospace, monospace;
+}
+
+.lcd__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lcd__row--top {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  justify-content: space-between;
+  opacity: 0.92;
+}
+.lcd__row--main {
+  justify-content: center;
+  overflow: hidden;   /* clip the scrolling span */
+  width: 100%;
+}
+.lcd__row--bottom {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  justify-content: flex-end;
+  opacity: 0.85;
+}
+
+.lcd__main {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 30px;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.lcd__icon--play { font-size: 11px; opacity: 0; transition: opacity 120ms ease; }
+.lcd[data-playing="true"] .lcd__icon--play { opacity: 1; }
+
+.lcd__mode { font-size: 12px; }
+.lcd__battery { font-size: 14px; opacity: 0.8; }
+
+/* Faint dim "ghost" segments behind the live text to mimic an unlit LCD */
+.lcd::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Glossy glare */
+.lcd__glare {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.0) 22%, rgba(255,255,255,0.0) 78%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+/* Off state: dim everything except a faint ghost */
+.lcd[data-power="off"] .lcd__inner { opacity: 0.18; text-shadow: none; }
+
+/* Blink for entry cursor */
+@keyframes lcd-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.25; }
+}
+.lcd[data-entry="true"] .lcd__main { animation: lcd-blink 700ms steps(2) infinite; }
+
+/* ── Marquee scroll for playlist (non-Bible) mode ──────────────────────────
+   JS sets --scroll-px (how far left to shift) and --scroll-dur on the inner
+   span element. An 8% leading pause lets the user read the start of the name
+   before it begins moving; a matching trailing pause holds the end in view. */
+@keyframes lcd-marquee {
+  0%   { transform: translateX(0); }
+  8%   { transform: translateX(0); }
+  92%  { transform: translateX(var(--scroll-px, 0px)); }
+  100% { transform: translateX(var(--scroll-px, 0px)); }
+}
+
+.lcd__main--scroll {
+  display: inline-block;
+  white-space: nowrap;
+  animation: lcd-marquee var(--scroll-dur, 8s) linear infinite;
+  will-change: transform;
+}

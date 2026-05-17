@@ -1,0 +1,36 @@
+{
+  "_comment": "Runtime config. The factory in scripts/sources/index.js dispatches on source.type.",
+
+  "source": {
+    "type": "listenfaithfully",
+    "baseUrl": "http://localhost:8003/listenfaithfully",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlJZCI6Ijk0MzljOGQ1LTVkNzktNDUzYi04NjAwLWRmMDgwNTAyNTQxNyIsIm5hbWUiOiJ0ZXN0IiwidHlwZSI6ImFwaSIsImlhdCI6MTc3ODk3MjYxMH0.z9ygpxTAmJzB3bt86BmrggVbO9zG73Gw0WONmd32jnQ",
+    "libraries": [
+      {
+        "name": "圣经",
+        "libraryName": "bible",
+        "scanMode": "pattern",
+        "filePattern": "(?<book>\\d+)-(?<chapter>\\d+)",
+        "_note": "Files must be named like 01-001.mp3 (book1-chapter1) for precise book+chapter lookup"
+      },
+      {
+        "name": "讲道",
+        "libraryName": "sermons",
+        "scanMode": "sequential",
+        "_note": "Plays all files in 'sermons' in order"
+      },
+      {
+        "name": "诗歌",
+        "libraryName": "hymns",
+        "scanMode": "sequential",
+        "_note": "Plays all files in 'hymns' in order"
+      }
+    ]
+  },
+
+  "ui": {
+    "debug": false,
+    "startBook": 1,
+    "startChapter": 1
+  }
+}

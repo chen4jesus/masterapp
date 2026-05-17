@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Talking Bible</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/reset.css" />
+  <link rel="stylesheet" href="styles/device.css" />
+  <link rel="stylesheet" href="styles/buttons.css" />
+  <link rel="stylesheet" href="styles/display.css" />
+</head>
+<body>
+  <main class="stage">
+    <section class="device" role="application" aria-label="Handheld Talking Bible">
+      <!-- Top edge: power/volume switch + indicator -->
+      <div class="device__top">
+        <div class="top-switch" aria-hidden="true">
+          <span class="top-switch__nub"></span>
+        </div>
+        <div class="top-indicator" aria-hidden="true"></div>
+      </div>
+
+      <!-- Body -->
+      <div class="device__body">
+        <!-- Left panel: speaker grille with glowing cross -->
+        <div class="panel panel--grille" aria-hidden="true">
+          <div class="grille"></div>
+          <div class="cross" data-cross></div>
+        </div>
+
+        <!-- Right panel: LCD + keypad + transport -->
+        <div class="panel panel--controls">
+          <!-- LCD display -->
+          <div class="lcd" data-lcd>
+            <div class="lcd__inner">
+              <div class="lcd__row lcd__row--top">
+                <span class="lcd__icon lcd__icon--play" data-lcd-play>&#9654;</span>
+                <span class="lcd__mode" data-lcd-mode>BIBLE</span>
+                <span class="lcd__battery" data-lcd-battery>&#9636;</span>
+              </div>
+              <div class="lcd__row lcd__row--main">
+                <span class="lcd__main" data-lcd-main>--:--</span>
+              </div>
+              <div class="lcd__row lcd__row--bottom">
+                <span class="lcd__label" data-lcd-label>OFF</span>
+              </div>
+            </div>
+            <div class="lcd__glare"></div>
+          </div>
+
+          <!-- Numeric keypad -->
+          <div class="keypad" data-keypad>
+            <button class="key key--num" data-key="1" aria-label="1">1</button>
+            <button class="key key--num" data-key="2" aria-label="2">2</button>
+            <button class="key key--num" data-key="3" aria-label="3">3</button>
+            <button class="key key--num" data-key="4" aria-label="4">4</button>
+            <button class="key key--num" data-key="5" aria-label="5">5</button>
+            <button class="key key--num" data-key="6" aria-label="6">6</button>
+            <button class="key key--num" data-key="7" aria-label="7">7</button>
+            <button class="key key--num" data-key="8" aria-label="8">8</button>
+            <button class="key key--num" data-key="9" aria-label="9">9</button>
+            <button class="key key--fn" data-key="book" aria-label="Book">书卷</button>
+            <button class="key key--num" data-key="0" aria-label="0">0</button>
+            <button class="key key--fn" data-key="chapter" aria-label="Chapter">章节</button>
+          </div>
+
+          <!-- Transport row -->
+          <div class="transport" data-transport>
+            <button class="tkey" data-key="prev" aria-label="Previous chapter">
+              <span class="tkey__glyph">&#9198;</span>
+            </button>
+            <button class="tkey" data-key="play" aria-label="Play or pause">
+              <span class="tkey__glyph" data-play-glyph>&#9654;</span>
+            </button>
+            <button class="tkey" data-key="next" aria-label="Next chapter">
+              <span class="tkey__glyph">&#9197;</span>
+            </button>
+            <button class="tkey tkey--wide" data-key="mode" aria-label="Mode">
+              <span class="tkey__glyph">频道</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feet -->
+      <div class="device__feet" aria-hidden="true">
+        <span class="foot"></span>
+        <span class="foot"></span>
+      </div>
+    </section>
+
+    <!-- Audio element is hidden; controlled via JS -->
+    <audio data-audio preload="none"></audio>
+
+    <!-- Debug strip (optional) -->
+    <aside class="debug" data-debug hidden>
+      <div class="debug__row"><strong>State:</strong> <span data-debug-state>—</span></div>
+      <div class="debug__row"><strong>Source:</strong> <span data-debug-source>—</span></div>
+      <div class="debug__row"><strong>Now:</strong> <span data-debug-now>—</span></div>
+    </aside>
+  </main>
+
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>

@@ -211,3 +211,21 @@ tools.faithconnect.us {
     }
 }
 
+# -----------------------------------------------------------------------------
+# Bible SPA - radio.faithconnect.us
+# -----------------------------------------------------------------------------
+radio.faithconnect.us {
+    import common_headers
+    import standard_log radio
+
+    encode gzip zstd
+
+    reverse_proxy bible-spa:80 {
+        fail_duration 10s
+        lb_try_duration 2s
+    }
+
+    handle_errors {
+        respond "📖 Bible SPA is currently starting or unavailable. Please try again in a moment." 503
+    }
+}
