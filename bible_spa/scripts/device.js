@@ -153,11 +153,22 @@ export class Device {
   _onNext() {
     this.display.clearConfirmHint();
     const max = getBookById(this.book)?.chapters ?? 1;
+    const atEnd = this.chapter >= max && this.book >= 66;
     if (this.chapter < max) {
       this.chapter += 1;
     } else if (this.book < 66) {
       this.book += 1;
       this.chapter = 1;
+    }
+    // At the very last position with nothing to advance to, stop cleanly
+    // instead of re-playing the same track (e.g. auto-advance after Rev 22).
+    if (atEnd && this.state === STATE.PLAYING) {
+      this.state = STATE.IDLE;
+      this.display.setPlaying(false);
+      this.playGlyph.textContent = "▶";
+      this._refreshIdle();
+      this._syncDebug();
+      return;
     }
     this._afterNavigate();
   }
@@ -401,11 +412,14 @@ export class Device {
       this._syncDebug();
     });
     this.player.on("ended", () => {
-      this.state = STATE.IDLE;
+      // Keep state as PLAYING so _afterNavigate() knows to auto-play the next track.
+      // _afterNavigate() will call _loadAndPlay() when state is PLAYING/PAUSED.
+      // If we are already at the very last position (no next), _onNext() is a no-op
+      // and _afterNavigate() will call _loadAndPlay() which gracefully handles no URL.
+      this.state = STATE.PLAYING;
       this.display.setPlaying(false);
       this.playGlyph.textContent = "▶";
       this._onNext();
-      this._loadAndPlay();
     });
     this.player.on("time",  (t) => {
       if (this.state === STATE.PLAYING) this._renderPlayback(t);
